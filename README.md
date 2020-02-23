@@ -1,7 +1,14 @@
+# Mastery Gradebook Dashboard
+## CSC 312 Software Design
+**Team 3**
+* Abby 
+* Ben
+* Brad
+* Gracie 
+* Katie
+* Owen 
+* Ana
 
-# mastery-grade-dashboard
+## Project Overview
 
-CSC 312 Software Design
-Team 3
-Members: Abby, Ben, Brad, Gracie, Katie, Owen, Ana
-Project: Mastery System Grade Book Dashboard
+## Table of Contents
