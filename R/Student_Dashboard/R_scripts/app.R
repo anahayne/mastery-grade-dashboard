@@ -1,18 +1,18 @@
 #
-# This is a Shiny web application. You can run the application by clicking
+# This is a template Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
 #
 # Find out more about building applications with Shiny here:
 #
 #    http://shiny.rstudio.com/
 #
-# Authors: Team 3 
+# Author: Owen Bezick
 
 # Source Libraries
 source("libraries.R", local = TRUE)
 
 
-# Define UI for application that draws a histogram
+# Define template UI for application 
 ui <- dashboardPagePlus(
     dashboardHeaderPlus(title = "Title"
     )
@@ -34,7 +34,7 @@ ui <- dashboardPagePlus(
 )
 
 
-# Define server logic required to draw a histogram
+# Define server logic 
 server <- function(input, output) {
     output$tabTwo <- renderText("This is tab two.")
 }
