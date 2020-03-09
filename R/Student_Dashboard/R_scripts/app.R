@@ -14,20 +14,20 @@ source("libraries.R", local = TRUE)
 
 # Define template UI for application 
 ui <- dashboardPagePlus(
-    dashboardHeaderPlus(title = "Title"
+    dashboardHeaderPlus(title = "Title" # Creates dashboardHeaderPlus title (can inject javascript here to add pictures, fonts, etc.)
     )
-    , dashboardSidebar(
+    , dashboardSidebar( # Contains a sidebarMenu with menuItems and subMenuItems
         sidebarMenu(
-            menuItem(tabName = "tabOne", text = "Tab One", icon = icon("one"))
+            menuItem(tabName = "tabOne", text = "Tab One", icon = icon("one")) # menuItem
             , menuItem(tabName = "tabTwo", text = "Tab Two", icon = icon("two")))
     )
-    , dashboardBody(
+    , dashboardBody( # Contains tabItems
         tabItems(
             tabItem(
-                tabName = "tabOne", HTML("This is tab one.")
+                tabName = "tabOne", HTML("This is tab one.") # This tab has HTML output directly in the UI
             )
             , tabItem(
-                tabName = "tabTwo", uiOutput("tabTwo")
+                tabName = "tabTwo", uiOutput("tabTwo") # This tab uses a uiOutput from the server
             )
         )
     )
@@ -36,7 +36,7 @@ ui <- dashboardPagePlus(
 
 # Define server logic 
 server <- function(input, output) {
-    output$tabTwo <- renderText("This is tab two.")
+    output$tabTwo <- renderText("This is tab two.") # Output to be used in the UI
 }
 
 # Run the application 
