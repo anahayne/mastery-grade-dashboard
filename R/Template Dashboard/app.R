@@ -58,6 +58,16 @@ ui <- dashboardPagePlus(
 
 # Define server logic 
 server <- function(input, output) {
+    # Data Intake -----
+    # data is a container of reactiveValues that can be recalcualted throughout the app.
+    data <- reactiveValues()
+    
+    data$review_a <- read_excel("example_gradebook.xlsx", sheet = "review_a") # Reads in excel sheet and stores in the reactive values container
+    
+    data$grade_codebook <- read_excel("example_gradebook.xlsx", sheet = "grade_codebook")
+    
+    data$student_names <- read_excel("example_gradebook.xlsx", sheet = "names")
+    
     
     # renderText output ----
     output$text <- renderText("Sample renderText output.") # Output to be used in the UI
