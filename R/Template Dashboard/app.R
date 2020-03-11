@@ -34,12 +34,15 @@ ui <- dashboardPagePlus(
             , tabItem(
                 tabName = "tabTwo"
                 , fluidRow(
-                    box(width = 6, title = "Select Students by ID", status = "primary" # A box is a UI element that encloses uiOutputs, such as datatables
+                    box(width = 6, title = "Filters", status = "primary" # A box is a UI element that encloses uiOutputs, such as datatables
                         , uiOutput("studentPicker")
+                        , uiOutput("topicPicker")
                     )
-                    , valueBoxOutput("total_mastered", width = 2)
-                    , valueBoxOutput("total_journey", width = 2)
-                    , valueBoxOutput("total_apprentice", width = 2)
+                    , box(width = 6, status = "primary", title = "Totals"
+                          , valueBoxOutput("total_mastered", width = 4)
+                          , valueBoxOutput("total_journey", width = 4)
+                          , valueBoxOutput("total_apprentice", width = 4)
+                    )
                     
                 )
                 , fluidRow(
@@ -101,23 +104,45 @@ server <- function(input, output) {
     # Student Picker
     output$studentPicker <- renderUI({
         pickerInput("studentPicker"
-                    ,""
+                    ,"Select Student by ID"
                     , choices = ls_students()
                     , selected = ls_students()
                     , multiple = TRUE)
     })
     
-    # DT output
-    output$review_a_dt <- renderDT({
+    # List of topics
+    ls_topics <- reactive({
+        df <- data$review_a
+        df$topic %>% unique()
+    })
+    
+    # Topic Picker
+    output$topicPicker <- renderUI({
+        pickerInput("topicPicker"
+                    ,"Select Topic by Number"
+                    , choices = ls_topics()
+                    , selected = ls_topics()
+                    , multiple = TRUE)
+    })
+    
+    # Review A Data
+    df_review_a <- reactive({
+        req(input$studentPicker, input$topicPicker)
+        
         review_a <- data$review_a
         names <- data$student_names
         merged <- merge(review_a, names, by = "ID") %>%
             mutate(ID = as.character(ID))
         
         filtered <- merged  %>%
-            filter(ID %in% input$studentPicker)
-        
-        df <- filtered %>%
+            filter(ID %in% input$studentPicker) %>%
+            filter(topic %in% input$topicPicker)
+    })
+    
+    # DT output
+    output$review_a_dt <- renderDT({
+        df <- df_review_a()
+        df <- df %>%
             select(ID, First, Last, Topic = topic, Grade = grade)
         
         datatable(df, rownames = FALSE)
@@ -126,7 +151,7 @@ server <- function(input, output) {
     # Value boxes 
     # Mastery
     total_m <- reactive({
-        df <- data$review_a
+        df <- df_review_a()
         grades <- df$grade
         table <- table(grades)
         total <- table[names(table)=="M"]
@@ -137,8 +162,7 @@ server <- function(input, output) {
     
     # Journeymen
     total_j <- reactive({
-        #browser()
-        df <- data$review_a
+        df <- df_review_a()
         grades <- df$grade
         table <- table(grades)
         total <- table[names(table)=="J"]
@@ -149,7 +173,7 @@ server <- function(input, output) {
     
     # Apprentice
     total_a <- reactive({
-        df <- data$review_a
+        df <- df_review_a()
         grades <- df$grade
         table <- table(grades)
         total <- table[names(table)=="A"]
