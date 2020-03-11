@@ -19,7 +19,7 @@ ui <- dashboardPagePlus(
     , dashboardSidebar( # Contains a sidebarMenu with menuItems and subMenuItems
         sidebarMenu(
             menuItem(tabName = "tabOne", text = "Text Output", icon = icon("one")) # menuItem
-            , menuItem(tabName = "tabTwo", text = "DT Output", icon = icon("two"))
+            , menuItem(tabName = "tabTwo", text = "Review A", icon = icon("A"))
             , menuItem(tabName = "tabThree", text = "eCharts4R Output", icon = icon("two"))
             , menuItem(tabName = "tabFour", text = "Action Button & Modal Viewer"))
     )
@@ -33,8 +33,9 @@ ui <- dashboardPagePlus(
             )
             , tabItem(
                 tabName = "tabTwo"
-                , box(width = 12, title = "Sample Datatable", status = "primary" # A box is a UI element that encloses uiOutputs, such as datatables
-                      , DTOutput("carsDT") # DTOutput is used for DT tables, instead of uiOutput.
+                , box(width = 12, title = "Review A Datatable", status = "primary" # A box is a UI element that encloses uiOutputs, such as datatables
+                      , uiOutput("studentPicker")
+                      , DTOutput("review_a_dt") # DTOutput is used for DT tables, instead of uiOutput.
                 )
             )
             , tabItem(
@@ -62,12 +63,12 @@ server <- function(input, output) {
     # data is a container of reactiveValues that can be recalcualted throughout the app.
     data <- reactiveValues()
     
+    # Eventually, we will replace the read excel call with a fetch SQL data table call.
     data$review_a <- read_excel("example_gradebook.xlsx", sheet = "review_a") # Reads in excel sheet and stores in the reactive values container
     
     data$grade_codebook <- read_excel("example_gradebook.xlsx", sheet = "grade_codebook")
     
     data$student_names <- read_excel("example_gradebook.xlsx", sheet = "names")
-    
     
     # renderText output ----
     output$text <- renderText("Sample renderText output.") # Output to be used in the UI
@@ -79,10 +80,35 @@ server <- function(input, output) {
         )
     })
     
-    # Data Table ----
-    output$carsDT <- renderDT({
-        carsData <- mtcars
-        datatable(carsData)
+    
+    # Review_a Data Table ----
+    # List of students
+    ls_students <- reactive({
+        df <- data$student_names
+        df$ID
+        })
+    
+    # Student Picker
+    output$studentPicker <- renderUI({
+        pickerInput("studentPicker"
+                    ,"Select Students by ID"
+                    , choices = ls_students()
+                    , selected = ls_students()
+                    , multiple = TRUE)
+        })
+    
+    # DT output
+    output$review_a_dt <- renderDT({
+        review_a <- data$review_a
+        names <- data$student_names
+        merged <- merge(review_a, names, by = "ID") %>%
+            mutate(ID = as.character(ID))
+        filtered <- merged  %>%
+            filter(ID %in% input$studentPicker)
+        df <- filtered %>%
+            select(ID, First, Last, Topic = topic, Grade = grade)
+
+        datatable(df, rownames = FALSE)
     })
     
     # Graphs ----
