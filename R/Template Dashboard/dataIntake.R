@@ -9,3 +9,9 @@ data$grade_codebook <- read_excel("example_gradebook.xlsx", sheet = "grade_codeb
 
 data$student_names <- read_excel("example_gradebook.xlsx", sheet = "names")
 
+# DB Connnection ----
+con  <- db_connect()
+
+# Pull each data table from SQL ----
+sql_query <- 'Select * from Shiny.dbo.TABLENAME' 
+df_campus <- dbGetQuery(con, sql_query)
