@@ -10,60 +10,42 @@
 
 # Source Libraries
 source("libraries.R", local = TRUE)
+source("dataIntake.R", local = TRUE)
 
 # UI ----
 ui <- dashboardPagePlus(
-    dashboardHeaderPlus(title = "Template Shiny App" # Creates dashboardHeaderPlus title (can inject javascript here to add pictures, fonts, etc.)
+    dashboardHeaderPlus(title = "Professor View" # Creates dashboardHeaderPlus title (can inject javascript here to add pictures, fonts, etc.)
     )
     # Sidebar ----
     , dashboardSidebar( # Contains a sidebarMenu with menuItems and subMenuItems
         sidebarMenu(
-            menuItem(tabName = "tabOne", text = "Text Output", icon = icon("one")) # menuItem
-            , menuItem(tabName = "tabTwo", text = "Review A", icon = icon("A"))
-            , menuItem(tabName = "tabThree", text = "eCharts4R Output", icon = icon("two"))
-            , menuItem(tabName = "tabFour", text = "Action Button & Modal Viewer"))
+            menuItem(tabName = "reviewGrades", text = "View Review Grades", icon = icon("one")) # menuItem
+            , menuItem(tabName = "homeworkGrades", text = "View Homework Grades", icon = icon("A"))
+        )
     )
     # Body ----
     , dashboardBody( # Contains tabItems
         tabItems(
             tabItem(
-                tabName = "tabOne"
+                tabName = "reviewGrades"
                 , HTML("Sample <b> HTML </b> output") # This is HTML output directly in the UI
                 , uiOutput("text") # This is a uiOutput from the server
             )
             , tabItem(
-                tabName = "tabTwo"
+                tabName = "homeworkGrades"
                 , fluidRow(
-                    box(width = 6, title = "Filters", status = "primary" # A box is a UI element that encloses uiOutputs, such as datatables
-                        , uiOutput("studentPicker")
-                        , uiOutput("topicPicker")
+                    box(width = 12, title = "Filter:", status = "primary" # A box is a UI element that encloses uiOutputs, such as datatables
+                        ,column(width = 6
+                                ,uiOutput("hwStudentPicker")
+                        )
+                        , column(width = 6
+                                 ,uiOutput("hwPicker")
+                        )
                     )
-                    , box(width = 6, status = "primary", title = "Totals"
-                          , valueBoxOutput("total_mastered", width = 4)
-                          , valueBoxOutput("total_journey", width = 4)
-                          , valueBoxOutput("total_apprentice", width = 4)
+                    , box(width = 12, status = "primary"
+                          , DTOutput("homeworkGradeTable")
                     )
-                    
                 )
-                , fluidRow(
-                    box(width = 12, title = "Review A Datatable", status = "primary" 
-                        , DTOutput("review_a_dt") # DTOutput is used for DT tables, instead of uiOutput.
-                    ) 
-                )
-            )
-            , tabItem(
-                tabName = "tabThree"
-                , box(width = 12, title = "Sample Graphs", status = "danger", collapsible = TRUE
-                      , echarts4rOutput("sample_line") # echarts4rOutput is used for echarts4r charts, instead of uiOutput or DTOutput
-                      , echarts4rOutput("sample_bar")
-                )
-            )
-            , tabItem(
-                tabName = "tabFour"
-                # Action buttons can be implemented directly in the UI or in the server
-                , actionBttn(inputId = 'modal' # the inputId will be used in the server in an observeEvent call
-                             , label = "Click for Modal Viewer"
-                             , icon = icon('test'))
             )
         )
     )
@@ -72,17 +54,6 @@ ui <- dashboardPagePlus(
 
 # Define server logic 
 server <- function(input, output) {
-    # Data Intake -----
-    # data is a container of reactiveValues that can be recalcualted throughout the app.
-    data <- reactiveValues()
-    
-    # Eventually, we will replace the read excel call with a fetch SQL data table call.
-    data$review_a <- read_excel("example_gradebook.xlsx", sheet = "review_a") # Reads in excel sheet and stores in the reactive values container
-    
-    data$grade_codebook <- read_excel("example_gradebook.xlsx", sheet = "grade_codebook")
-    
-    data$student_names <- read_excel("example_gradebook.xlsx", sheet = "names")
-    
     # renderText output ----
     output$text <- renderText("Sample renderText output.") # Output to be used in the UI
     
@@ -93,38 +64,44 @@ server <- function(input, output) {
         )
     })
     
-    # Review A Server -----
-    
+    # Homeworks Server -----
     # List of students
     ls_students <- reactive({
-        df <- data$student_names
-        df$ID
+        df <- getHomeworkGrades()
+        df %>% distinct(student_id) %>% pull()
     })
-    
+    #List from homework
+    ls_homeworks <- reactive({
+        df <- getHomeworkGrades()
+        df %>% distinct(homework_id) %>% pull()
+    })
     # Student Picker
-    output$studentPicker <- renderUI({
-        pickerInput("studentPicker"
-                    ,"Select Student by ID"
+    output$hwStudentPicker <- renderUI({
+        pickerInput("hwStudentPicker"
+                    ,"Student by ID"
                     , choices = ls_students()
                     , selected = ls_students()
                     , multiple = TRUE)
     })
-    
-    # List of topics
-    ls_topics <- reactive({
-        df <- data$review_a
-        df$topic %>% unique()
-    })
-    
-    # Topic Picker
-    output$topicPicker <- renderUI({
-        pickerInput("topicPicker"
-                    ,"Select Topic by Number"
-                    , choices = ls_topics()
-                    , selected = ls_topics()
+    # Homework Picker
+    output$hwPicker <- renderUI({
+        pickerInput("hwPicker"
+                    ,"Homework by ID"
+                    , choices = ls_homeworks()
+                    , selected = ls_homeworks()
                     , multiple = TRUE)
     })
-    
+    # Table
+    output$homeworkGradeTable <- renderDT({
+        req(input$hwStudentPicker, input$hwPicker)
+        df <- getHomeworkGrades()
+        df  <- df %>% 
+            filter(student_id %in% input$hwStudentPicker) %>%
+            filter(homework_id %in% input$hwPicker) %>%
+            select(student_id, first_name, last_name, homework_id, grade)
+        
+        datatable(df)
+    })
     # Review A Data
     df_review_a <- reactive({
         req(input$studentPicker, input$topicPicker)
