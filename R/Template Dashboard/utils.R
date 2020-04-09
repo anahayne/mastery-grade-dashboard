@@ -9,17 +9,6 @@ tbl_create <- function(con, data, name) {
   )
 }
 
-# Fetch a SQL table
-tbl_fetch <- function(conn, tbl_fun, ...) {
-  tbl_fun(conn, ...) %>% 
-    collect() %>% 
-    mutate_all(~ ifelse(is.na(.), 0, .)) %>% 
-    mutate_at(
-      vars(startDate, endDate, midPointConstruction),
-      ~ format(as.POSIXct(., origin = "1970-01-01"), "%Y-%m-%d")
-    )
-}
-
 # Connect to SQL database
 db_connect <- function(
   server = "mydbinstance.c0eoxulijuju.us-east-2.rds.amazonaws.com",
