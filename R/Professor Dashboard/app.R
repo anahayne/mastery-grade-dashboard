@@ -1,12 +1,8 @@
 #
-# This is a template Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
 #
-# Find out more about building applications with Shiny here:
+# Authors: Owen Bezick
 #
-#    http://shiny.rstudio.com/
-#
-# Author: Owen Bezick
+# 
 
 # Source Libraries
 source("libraries.R", local = TRUE)
@@ -14,10 +10,10 @@ source("dataIntake.R", local = TRUE)
 
 # UI ----
 ui <- dashboardPage(
-    dashboardHeader(title = "Professor View" # Creates dashboardHeaderPlus title (can inject javascript here to add pictures, fonts, etc.)
+    dashboardHeader(title = "Professor View" 
     )
     # Sidebar ----
-    , dashboardSidebar( # Contains a sidebarMenu with menuItems and subMenuItems
+    , dashboardSidebar( 
         sidebarMenu(
             menuItem(tabName = "home", text = "Home", icon = icon("home"))
             , menuItem(tabName ="viewGrades", text = "View Grades", icon = icon("chalkboard")
@@ -52,7 +48,12 @@ ui <- dashboardPage(
                 )
                 , fluidRow(
                     box(width = 12, status = "primary"
-                        , DTOutput("totalReviewGrades")
+                        , column(width = 6
+                                 , DTOutput("totalReviewGrades")
+                        )
+                        , column(width = 6
+                                 , echarts4rOutput("")
+                        )
                     )
                 )
             )
@@ -62,7 +63,7 @@ ui <- dashboardPage(
                 , fluidRow(
                     box(width = 12, title = "Filter:", status = "primary" 
                         ,column(width = 6
-                                ,uiOutput("hwStudentPicker")
+                                , uiOutput("hwStudentPicker")
                         )
                         , column(width = 6
                                  ,uiOutput("hwPicker")
@@ -70,8 +71,11 @@ ui <- dashboardPage(
                     )
                 )
                 , fluidRow(
-                    box(width = 12, status = "primary"
+                    box(width = 6, status = "primary"
                         , DTOutput("homeworkGradeTable")
+                    )
+                    , box(width = 6, status = "primary"
+                          , echarts4rOutput("avgHomeworkGraph")
                     )
                 )
             )
@@ -127,7 +131,7 @@ server <- function(input, output) {
             select(review_id, First = first_name, Last = last_name, Topic = topic_id, Grade = grade)
         datatable(df, rownames = FALSE)
     })
-    
+
     # Homeworks Server -----
     # List of students
     ls_studentsHW <- reactive({
@@ -167,6 +171,37 @@ server <- function(input, output) {
         datatable(df, rownames = FALSE)
     })
     
+    # Homework Average Graph
+    # Data
+    hwAvg <- reactive({
+        req(input$hwStudentPicker, input$hwPicker)
+        df <- getHomeworkGrades()
+        df  <- df %>% 
+            filter(student_id %in% input$hwStudentPicker) %>%
+            filter(homework_id %in% input$hwPicker) %>%
+            group_by(student_id) %>%
+            mutate(homeworkAvg = mean(grade)/100)
+    })
+    # Graph
+    output$avgHomeworkGraph <- renderEcharts4r({
+        df <- hwAvg()
+        df %>%
+            e_chart(last_name) %>%
+            e_scatter(homeworkAvg, symbol_size = 10) %>%
+            e_theme("westeros") %>%
+            e_tooltip(formatter = e_tooltip_item_formatter(
+                style = c("percent"),
+                digits = 2
+            )
+            ) %>%
+            e_x_axis(axisLabel = list(interval = 0, rotate = 45)) %>%
+            e_y_axis(formatter = e_axis_formatter(
+                style = c("percent"),
+                digits = 2,
+            )
+            ) %>%
+            e_legend(show = F)
+    })
     
 }
 
