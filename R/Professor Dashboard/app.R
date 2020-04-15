@@ -32,6 +32,9 @@ ui <- dashboardPage(
             # Home UI ----
             tabItem(
                 tabName = "home"
+                , HTML("<center><h1> Mastery Gradebook Dashboard </h1></center>")
+                , div(img(src="davidsonCollege.jpg"), style="text-align: center;")
+                , HTML("<center> <h3> Software Design, Group 3. <br> Gracie Petty, Abby Santiago, Ben Santiago, Brad Shook, Katie Turner, Ana Hayne & Owen Bezick </h3></center>")
             )
             # View Review UI ----
             , tabItem(
@@ -47,13 +50,14 @@ ui <- dashboardPage(
                     )
                 )
                 , fluidRow(
-                    box(width = 12, status = "primary"
-                        , column(width = 12
-                                 , DTOutput("totalReviewGrades")
-                        )
+                    box(width = 6, status = "primary", title = "Review Grades", height = "550"
+                        , DTOutput("totalReviewGrades")
                     )
+                    , box(width = 6, height = "550", stauts = "primary", title = "Total Grades", status = "primary"
+                          , echarts4rOutput("gradeBar"))
                 )
             )
+            
             # View Homework UI ----
             , tabItem(
                 tabName = "homeworkGrades"
@@ -68,10 +72,10 @@ ui <- dashboardPage(
                     )
                 )
                 , fluidRow(
-                    box(width = 6, status = "primary"
+                    box(width = 6, status = "primary", height= "550", title = "Homework Grades"
                         , DTOutput("homeworkGradeTable")
                     )
-                    , box(width = 6, status = "primary"
+                    , box(width = 6, status = "primary", height= "550", title = "Homework Averages"
                           , echarts4rOutput("avgHomeworkGraph")
                     )
                 )
@@ -80,7 +84,7 @@ ui <- dashboardPage(
             , tabItem(
                 tabName = "editReviewGrades"
                 , fluidRow(
-                    box(width = 12, status = "primary", title = "Click Row To Edit"
+                    box(width = 12, status = "primary", title = "Edit Review Grades"
                         , column(width = 12
                                  , DTOutput("totalEditReviewGrades")
                         )
@@ -91,7 +95,7 @@ ui <- dashboardPage(
             , tabItem(
                 tabName = "editHomeworkGrades"
                 , fluidRow(
-                    box(width = 12, status = "primary", title = "Click Row To Edit"
+                    box(width = 12, status = "primary", title = "Edit Homework Grades"
                         , DTOutput("editHomeworkGrades")
                     )
                 )
@@ -105,13 +109,12 @@ ui <- dashboardPage(
 # Define server logic 
 server <- function(input, output) {
     # View Review Server ---- 
-    
     # List of students
     ls_studentsR <- reactive({
         df <- getReviewGrades()
         df %>% distinct(student_id) %>% pull()
     })
-    #List from homework
+    #List of reviews
     ls_reviews<- reactive({
         df <- getReviewGrades()
         df %>% distinct(review_id) %>% pull()
@@ -124,7 +127,7 @@ server <- function(input, output) {
                     , selected = ls_studentsR()
                     , multiple = TRUE)
     })
-    # Homework Picker
+    # Review Picker
     output$reviewPicker <- renderUI({
         pickerInput("reviewPicker"
                     ,"Review by ID"
@@ -141,6 +144,26 @@ server <- function(input, output) {
             filter(review_id %in% input$reviewPicker, student_id %in% input$reviewStudentPicker) %>%
             select(review_id, First = first_name, Last = last_name, Topic = topic_id, Grade = grade)
         datatable(df, rownames = FALSE)
+    })
+    
+    # Total Grades Chart
+    output$gradeBar <- renderEcharts4r({
+        req(input$reviewStudentPicker, input$reviewPicker)
+        df <- getReviewGrades() %>%
+            filter(review_id %in% input$reviewPicker, student_id %in% input$reviewStudentPicker) %>%
+            select(grade) %>%
+            count(grade)
+        graph_df <- as_data_frame(t(df)) %>% 
+            mutate(chart = "")
+        
+        graph_df %>%
+            e_chart(chart) %>%
+            e_bar("V1", name = "Apprentice") %>%
+            e_bar("V2", name = "Journeyman")  %>%
+            e_bar("V3", name = "Master") %>%
+            e_theme("westeros") %>%
+            e_tooltip() %>%
+            e_legend(bottom = 0)
     })
     
     # View Homeworks Server -----
@@ -223,7 +246,7 @@ server <- function(input, output) {
     
     output$totalEditReviewGrades <- renderDT({
         df <- reviewGradesData()
-        datatable(df, rownames = FALSE, selection = list(mode = 'single', target = 'row'), filter = 'top')
+        datatable(df, rownames = FALSE, selection = list(mode = 'single', target = 'row'), filter = 'top', caption = "Click a Row to Edit")
     })
     
     observeEvent(input$totalEditReviewGrades_rows_selected,{
@@ -278,7 +301,7 @@ server <- function(input, output) {
     
     output$editHomeworkGrades <- renderDT({
         df <- homeworkGradesData()
-        datatable(df, rownames = FALSE, selection = list(mode = 'single', target = 'row'), filter = 'top')
+        datatable(df, rownames = FALSE, selection = list(mode = 'single', target = 'row'), filter = 'top', caption = "Click a Row to Edit")
     })
     
     observeEvent(input$editHomeworkGrades_rows_selected,{
