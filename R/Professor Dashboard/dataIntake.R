@@ -20,6 +20,8 @@ df_reviewGrades <- dbGetQuery(con, sql_query)
 sql_query <- 'Select * from Shiny.dbo.homeworkGrades' 
 df_homeworkGrades <- dbGetQuery(con, sql_query)
 
+reactive <- reactiveValues(df_reviewGrades = df_reviewGrades)
+
 # Get Homework Grades
 getHomeworkGrades <- reactive({
   merge(df_homeworkGrades, df_students) %>% merge(df_homeworks)
@@ -27,5 +29,5 @@ getHomeworkGrades <- reactive({
 
 # Get Review Grades
 getReviewGrades <- reactive({
-  merge(df_reviewGrades, df_students) %>% merge(df_reviews)
+  merge(reactive$df_reviewGrades, df_students) %>% merge(df_reviews)
 }) 
