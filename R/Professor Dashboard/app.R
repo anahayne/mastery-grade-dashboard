@@ -147,7 +147,7 @@ server <- function(input, output) {
         df <- getReviewGrades()
         df <- df %>%
             filter(review_id %in% input$reviewPicker, first_name %in% input$reviewStudentPicker) %>%
-            select(review_id, First = first_name, Last = last_name, Topic = topic_id, Grade = grade)
+            select( First = first_name, Last = last_name,`Review ID` = review_id, Topic = topic_id, Grade = grade)
         datatable(df, rownames = FALSE)
     })
     
@@ -211,7 +211,7 @@ server <- function(input, output) {
         df  <- df %>% 
             filter(first_name %in% input$hwStudentPicker) %>%
             filter(homework_id %in% input$hwPicker) %>%
-            select(student_id, first_name, last_name, homework_id, grade)
+            select(First = first_name, Last = last_name, `Homework ID` = homework_id, Grade= grade)
         
         datatable(df, rownames = FALSE)
     })
