@@ -297,8 +297,32 @@ server <- function(input, output) {
     observeEvent(input$gradeDismiss,{
         removeModal()
     })
+    
     observeEvent(input$gradeSave,{
-        # Write to Database and pull
+        rowNumber <- input$totalEditReviewGrades_rows_selected
+        df <- reviewGradesData()
+        rowData <- df[rowNumber, ]
+        topic_id <- rowData$Topic
+        newGrade <- as.character(input$grade)
+        review_id <- rowData[1, 3]
+        
+        df <- df_students %>%
+            filter(first_name == rowData$First) %>%
+            filter(last_name == rowData$Last) 
+        
+        student_id <- df$student_id
+        
+        # Write to Database
+        sql_query <- paste0("update Shiny.dbo.reviewGrades set grade = '", newGrade, "' where (topic_id = ", topic_id, " and student_id = ", student_id, " and review_id = ", review_id, ")")
+        dbExecute(con, sql_query)
+        
+        # Background App Refresh
+        sql_query <- 'Select * from Shiny.dbo.reviewGrades'
+        df_reviewGrades <- dbGetQuery(con, sql_query)
+        reactive$df_reviewGrades <- df_reviewGrades
+        
+        showNotification("Changes Saved to Remote Database.", type = c("message"), duration = 3)
+        
         removeModal()
     })
     
