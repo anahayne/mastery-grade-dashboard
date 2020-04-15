@@ -1,0 +1,12 @@
+name: ProffesorView
+title: ProffesorView
+username:
+account: owen-bezick
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2123835
+bundleId: 3018616
+url: https://owen-bezick.shinyapps.io/ProffesorView/
+when: 1586978001.70614
+asMultiple: FALSE
+asStatic: FALSE
