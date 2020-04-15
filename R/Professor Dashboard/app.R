@@ -79,18 +79,8 @@ ui <- dashboardPage(
             # Edit Review Grades ----
             , tabItem(
                 tabName = "editReviewGrades"
-                ,fluidRow(
-                    box(width = 12, title = "Filter:", status = "primary" 
-                        ,column(width = 6
-                                ,uiOutput("reviewEditStudentPicker")
-                        )
-                        , column(width = 6
-                                 ,uiOutput("reviewEditPicker")
-                        )
-                    )
-                )
                 , fluidRow(
-                    box(width = 12, status = "primary", title = "Double-Click Cell to Edit"
+                    box(width = 12, status = "primary", title = "Click Row To Edit"
                         , column(width = 12
                                  , DTOutput("totalEditReviewGrades")
                         )
@@ -101,18 +91,8 @@ ui <- dashboardPage(
             , tabItem(
                 tabName = "editHomeworkGrades"
                 , fluidRow(
-                    box(width = 12, title = "Filter:", status = "primary" 
-                        ,column(width = 6
-                                , uiOutput("hwEditStudentPicker")
-                        )
-                        , column(width = 6
-                                 ,uiOutput("hwEditPicker")
-                        )
-                    )
-                )
-                , fluidRow(
-                    box(width = 12, status = "primary", title = "Double-Click Cell to Edit"
-                        , DTOutput("homeworkEditGradeTable")
+                    box(width = 12, status = "primary", title = "Click Row To Edit"
+                        , DTOutput("editHomeworkGrades")
                     )
                 )
             )
@@ -162,7 +142,7 @@ server <- function(input, output) {
             select(review_id, First = first_name, Last = last_name, Topic = topic_id, Grade = grade)
         datatable(df, rownames = FALSE)
     })
-
+    
     # View Homeworks Server -----
     # List of students
     ls_studentsHW <- reactive({
@@ -234,62 +214,113 @@ server <- function(input, output) {
             e_legend(show = F)
     })
     # Edit Review Server ----
-    # Student Picker
-    output$reviewEditStudentPicker <- renderUI({
-        pickerInput("reviewEditStudentPicker"
-                    ,"Student by ID"
-                    , choices = ls_studentsR()
-                    , selected = ls_studentsR()
-                    , multiple = TRUE)
-    })
-    # Homework Picker
-    output$reviewEditPicker <- renderUI({
-        pickerInput("reviewEditPicker"
-                    ,"Review by ID"
-                    , choices = ls_reviews()
-                    , selected = ls_reviews()
-                    , multiple = TRUE)
-    })
-    
     # DT output
-    output$totalEditReviewGrades <- renderDT({
-        req(input$reviewEditStudentPicker, input$reviewEditPicker)
+    reviewGradesData <- reactive({
         df <- getReviewGrades()
         df <- df %>%
-            filter(review_id %in% input$reviewEditPicker) %>%
-            filter(student_id %in% input$reviewEditStudentPicker) %>%
-            select(review_id, First = first_name, Last = last_name, Topic = topic_id, Grade = grade)
-        datatable(df, rownames = FALSE, editable = T)
+            select(First = first_name, Last = last_name,`Review Id` = review_id,Topic = topic_id, Grade = grade)
+    })
+    
+    output$totalEditReviewGrades <- renderDT({
+        df <- reviewGradesData()
+        datatable(df, rownames = FALSE, selection = list(mode = 'single', target = 'row'), filter = 'top')
+    })
+    
+    observeEvent(input$totalEditReviewGrades_rows_selected,{
+        rowNumber <- input$totalEditReviewGrades_rows_selected
+        df <- reviewGradesData()
+        rowData <- df[rowNumber, ]
+        showModal(
+            modalDialog(title = "Edit Grade", easyClose = T
+                        ,box(width = 12, status = "primary"
+                             , HTML("<b> Name: </b>")
+                             , renderText(paste(rowData$First, rowData$Last))
+                             , HTML("<b> Topic ID: </b>")
+                             , renderText(rowData$Topic)
+                             , pickerInput("grade", "Grade:", choices = c("M", "J", "A"), selected = as.character(rowData$Grade))
+                        )
+                        , footer = fluidRow(
+                            column(width = 6
+                                   , actionBttn("gradeSave"
+                                                , "Save"
+                                                , icon = icon("save")
+                                                , style = "material-flat"
+                                                , block = T
+                                   )
+                            )
+                            , column(width = 6
+                                     , actionBttn("gradeDismiss"
+                                                  , "Dismiss"
+                                                  , icon = icon("close")
+                                                  , style = "material-flat"
+                                                  , block = T)
+                            )
+                        )
+            )
+        )
+    })
+    
+    observeEvent(input$gradeDismiss,{
+        removeModal()
+    })
+    observeEvent(input$gradeSave,{
+        # Write to Database and pull
+        removeModal()
     })
     
     # Edit Homework Server ----
-    # Student Picker
-    output$hwEditStudentPicker <- renderUI({
-        pickerInput("hwEditStudentPicker"
-                    ,"Student by ID"
-                    , choices = ls_studentsHW()
-                    , selected = ls_studentsHW()
-                    , multiple = TRUE)
+    # DT output
+    homeworkGradesData <- reactive({
+        df <- getHomeworkGrades()
+        df <- df %>%
+            select(First = first_name, Last = last_name,`Homework Id` = homework_id, Grade = grade)
     })
     
-    # Homework Picker
-    output$hwEditPicker <- renderUI({
-        pickerInput("hwEditPicker"
-                    ,"Homework by ID"
-                    , choices = ls_homeworksHW()
-                    , selected = ls_homeworksHW()
-                    , multiple = TRUE)
+    output$editHomeworkGrades <- renderDT({
+        df <- homeworkGradesData()
+        datatable(df, rownames = FALSE, selection = list(mode = 'single', target = 'row'), filter = 'top')
     })
-    # Table
-    output$homeworkEditGradeTable <- renderDT({
-        req(input$hwEditStudentPicker, input$hwEditPicker)
-        df <- getHomeworkGrades()
-        df  <- df %>% 
-            filter(student_id %in% input$hwEditStudentPicker) %>%
-            filter(homework_id %in% input$hwEditPicker) %>%
-            select(ID = student_id, First = first_name, Last =  last_name, `Homework ID` = homework_id, Grade = grade)
-        
-        datatable(df, rownames = FALSE, editable = T)
+    
+    observeEvent(input$editHomeworkGrades_rows_selected,{
+        rowNumber <- input$editHomeworkGrades_rows_selected
+        df <- homeworkGradesData()
+        rowData <- df[rowNumber, ]
+        showModal(
+            modalDialog(title = "Edit Grade", easyClose = T
+                        ,box(width = 12, status = "primary"
+                             , HTML("<b> Name: </b>")
+                             , renderText(paste(rowData$First, rowData$Last))
+                             , HTML("<b> Homework ID: </b>")
+                             , renderText(rowData[1,3])
+                             , numericInput("hwGrade", "Grade:",  value = as.numeric(rowData$Grade))
+                        )
+                        , footer = fluidRow(
+                            column(width = 6
+                                   , actionBttn("hwgradeSave"
+                                                , "Save"
+                                                , icon = icon("save")
+                                                , style = "material-flat"
+                                                , block = T
+                                   )
+                            )
+                            , column(width = 6
+                                     , actionBttn("hwgradeDismiss"
+                                                  , "Dismiss"
+                                                  , icon = icon("close")
+                                                  , style = "material-flat"
+                                                  , block = T)
+                            )
+                        )
+            )
+        )
+    })
+    
+    observeEvent(input$hwgradeDismiss,{
+        removeModal()
+    })
+    observeEvent(input$hwgradeSave,{
+        # Write to Database and pull
+        removeModal()
     })
     
 }
