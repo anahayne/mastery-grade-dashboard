@@ -109,10 +109,15 @@ ui <- dashboardPage(
 # Define server logic 
 server <- function(input, output) {
     # View Review Server ---- 
-    # List of students
+    # List of students by ID
     ls_studentsR <- reactive({
         df <- getReviewGrades()
         df %>% distinct(student_id) %>% pull()
+    })
+    # List of students by first_name
+    ls_studentsRFN <- reactive({
+        df <- getReviewGrades()
+        df %>% distinct(first_name) %>% pull()
     })
     #List of reviews
     ls_reviews<- reactive({
@@ -122,9 +127,9 @@ server <- function(input, output) {
     # Student Picker
     output$reviewStudentPicker <- renderUI({
         pickerInput("reviewStudentPicker"
-                    ,"Student by ID"
-                    , choices = ls_studentsR()
-                    , selected = ls_studentsR()
+                    ,"Student"
+                    , choices = ls_studentsRFN()
+                    , selected = ls_studentsRFN()
                     , multiple = TRUE)
     })
     # Review Picker
@@ -141,7 +146,7 @@ server <- function(input, output) {
         req(input$reviewStudentPicker, input$reviewPicker)
         df <- getReviewGrades()
         df <- df %>%
-            filter(review_id %in% input$reviewPicker, student_id %in% input$reviewStudentPicker) %>%
+            filter(review_id %in% input$reviewPicker, first_name %in% input$reviewStudentPicker) %>%
             select(review_id, First = first_name, Last = last_name, Topic = topic_id, Grade = grade)
         datatable(df, rownames = FALSE)
     })
@@ -150,7 +155,7 @@ server <- function(input, output) {
     output$gradeBar <- renderEcharts4r({
         req(input$reviewStudentPicker, input$reviewPicker)
         df <- getReviewGrades() %>%
-            filter(review_id %in% input$reviewPicker, student_id %in% input$reviewStudentPicker) %>%
+            filter(review_id %in% input$reviewPicker, first_name %in% input$reviewStudentPicker) %>%
             select(grade) %>%
             count(grade)
         graph_df <- as_data_frame(t(df)) %>% 
@@ -167,10 +172,16 @@ server <- function(input, output) {
     })
     
     # View Homeworks Server -----
-    # List of students
+    # List of students by ID
     ls_studentsHW <- reactive({
         df <- getHomeworkGrades()
         df %>% distinct(student_id) %>% pull()
+    })
+    
+    # List of students by first_name
+    ls_studentsHWFN <- reactive({
+        df <- getHomeworkGrades()
+        df %>% distinct(first_name) %>% pull()
     })
     #List from homework
     ls_homeworksHW <- reactive({
@@ -180,9 +191,9 @@ server <- function(input, output) {
     # Student Picker
     output$hwStudentPicker <- renderUI({
         pickerInput("hwStudentPicker"
-                    ,"Student by ID"
-                    , choices = ls_studentsHW()
-                    , selected = ls_studentsHW()
+                    ,"Student"
+                    , choices = ls_studentsHWFN()
+                    , selected = ls_studentsHWFN()
                     , multiple = TRUE)
     })
     # Homework Picker
@@ -198,7 +209,7 @@ server <- function(input, output) {
         req(input$hwStudentPicker, input$hwPicker)
         df <- getHomeworkGrades()
         df  <- df %>% 
-            filter(student_id %in% input$hwStudentPicker) %>%
+            filter(first_name %in% input$hwStudentPicker) %>%
             filter(homework_id %in% input$hwPicker) %>%
             select(student_id, first_name, last_name, homework_id, grade)
         
@@ -211,7 +222,7 @@ server <- function(input, output) {
         req(input$hwStudentPicker, input$hwPicker)
         df <- getHomeworkGrades()
         df  <- df %>% 
-            filter(student_id %in% input$hwStudentPicker) %>%
+            filter(first_name %in% input$hwStudentPicker) %>%
             filter(homework_id %in% input$hwPicker) %>%
             group_by(student_id) %>%
             mutate(homeworkAvg = mean(grade)/100)
