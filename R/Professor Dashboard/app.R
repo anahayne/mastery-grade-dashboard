@@ -33,7 +33,7 @@ ui <- dashboardPage(
             tabItem(
                 tabName = "home"
             )
-            # Review UI ----
+            # View Review UI ----
             , tabItem(
                 tabName = "reviewGrades"
                 ,fluidRow(
@@ -48,16 +48,13 @@ ui <- dashboardPage(
                 )
                 , fluidRow(
                     box(width = 12, status = "primary"
-                        , column(width = 6
+                        , column(width = 12
                                  , DTOutput("totalReviewGrades")
-                        )
-                        , column(width = 6
-                                 , echarts4rOutput("")
                         )
                     )
                 )
             )
-            # Homework UI ----
+            # View Homework UI ----
             , tabItem(
                 tabName = "homeworkGrades"
                 , fluidRow(
@@ -79,11 +76,45 @@ ui <- dashboardPage(
                     )
                 )
             )
+            # Edit Review Grades ----
             , tabItem(
                 tabName = "editReviewGrades"
+                ,fluidRow(
+                    box(width = 12, title = "Filter:", status = "primary" 
+                        ,column(width = 6
+                                ,uiOutput("reviewEditStudentPicker")
+                        )
+                        , column(width = 6
+                                 ,uiOutput("reviewEditPicker")
+                        )
+                    )
+                )
+                , fluidRow(
+                    box(width = 12, status = "primary", title = "Double-Click Cell to Edit"
+                        , column(width = 12
+                                 , DTOutput("totalEditReviewGrades")
+                        )
+                    )
+                )
             )
+            # Edit Homework UI ----
             , tabItem(
                 tabName = "editHomeworkGrades"
+                , fluidRow(
+                    box(width = 12, title = "Filter:", status = "primary" 
+                        ,column(width = 6
+                                , uiOutput("hwEditStudentPicker")
+                        )
+                        , column(width = 6
+                                 ,uiOutput("hwEditPicker")
+                        )
+                    )
+                )
+                , fluidRow(
+                    box(width = 12, status = "primary", title = "Double-Click Cell to Edit"
+                        , DTOutput("homeworkEditGradeTable")
+                    )
+                )
             )
             
         )
@@ -93,7 +124,7 @@ ui <- dashboardPage(
 
 # Define server logic 
 server <- function(input, output) {
-    # Review Server ---- 
+    # View Review Server ---- 
     
     # List of students
     ls_studentsR <- reactive({
@@ -132,7 +163,7 @@ server <- function(input, output) {
         datatable(df, rownames = FALSE)
     })
 
-    # Homeworks Server -----
+    # View Homeworks Server -----
     # List of students
     ls_studentsHW <- reactive({
         df <- getHomeworkGrades()
@@ -201,6 +232,64 @@ server <- function(input, output) {
             )
             ) %>%
             e_legend(show = F)
+    })
+    # Edit Review Server ----
+    # Student Picker
+    output$reviewEditStudentPicker <- renderUI({
+        pickerInput("reviewEditStudentPicker"
+                    ,"Student by ID"
+                    , choices = ls_studentsR()
+                    , selected = ls_studentsR()
+                    , multiple = TRUE)
+    })
+    # Homework Picker
+    output$reviewEditPicker <- renderUI({
+        pickerInput("reviewEditPicker"
+                    ,"Review by ID"
+                    , choices = ls_reviews()
+                    , selected = ls_reviews()
+                    , multiple = TRUE)
+    })
+    
+    # DT output
+    output$totalEditReviewGrades <- renderDT({
+        req(input$reviewEditStudentPicker, input$reviewEditPicker)
+        df <- getReviewGrades()
+        df <- df %>%
+            filter(review_id %in% input$reviewEditPicker) %>%
+            filter(student_id %in% input$reviewEditStudentPicker) %>%
+            select(review_id, First = first_name, Last = last_name, Topic = topic_id, Grade = grade)
+        datatable(df, rownames = FALSE, editable = T)
+    })
+    
+    # Edit Homework Server ----
+    # Student Picker
+    output$hwEditStudentPicker <- renderUI({
+        pickerInput("hwEditStudentPicker"
+                    ,"Student by ID"
+                    , choices = ls_studentsHW()
+                    , selected = ls_studentsHW()
+                    , multiple = TRUE)
+    })
+    
+    # Homework Picker
+    output$hwEditPicker <- renderUI({
+        pickerInput("hwEditPicker"
+                    ,"Homework by ID"
+                    , choices = ls_homeworksHW()
+                    , selected = ls_homeworksHW()
+                    , multiple = TRUE)
+    })
+    # Table
+    output$homeworkEditGradeTable <- renderDT({
+        req(input$hwEditStudentPicker, input$hwEditPicker)
+        df <- getHomeworkGrades()
+        df  <- df %>% 
+            filter(student_id %in% input$hwEditStudentPicker) %>%
+            filter(homework_id %in% input$hwEditPicker) %>%
+            select(ID = student_id, First = first_name, Last =  last_name, `Homework ID` = homework_id, Grade = grade)
+        
+        datatable(df, rownames = FALSE, editable = T)
     })
     
 }
