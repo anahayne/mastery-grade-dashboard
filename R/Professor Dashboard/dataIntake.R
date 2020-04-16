@@ -24,10 +24,12 @@ reactive <- reactiveValues(df_reviewGrades = df_reviewGrades)
 
 # Get Homework Grades
 getHomeworkGrades <- reactive({
-  merge(df_homeworkGrades, df_students) %>% merge(df_homeworks)
+  merge(df_homeworkGrades, df_students) %>% merge(df_homeworks) %>%
+    mutate(firstLast = paste(first_name, last_name))
 }) 
 
 # Get Review Grades
 getReviewGrades <- reactive({
-  merge(reactive$df_reviewGrades, df_students) %>% merge(df_reviews)
+  merge(reactive$df_reviewGrades, df_students) %>% merge(df_reviews) %>%
+    mutate(firstLast = paste(first_name, last_name))
 }) 
