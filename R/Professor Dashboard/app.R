@@ -1,7 +1,13 @@
+# Project: Mastery Grade System
+# Professor Side Dashboard 
+# app.R
 #
+# 4/16/20 -- First release (MIT License), in class demo
 #
-# Authors: Owen Bezick
-#
+# Purpose:This file contains the professor side server and user interface. This is where the main development of our app takes place.
+# 
+# Authors: Owen Bezick, Ana Hayne, Katie Turner, Brad Shook, Abby Santiago,
+# Ben Santiago, and Gracie Petty
 # 
 
 # Source Libraries
@@ -294,10 +300,12 @@ server <- function(input, output) {
         )
     })
     
+    # When the "Grade Dismiss" button is pressed
     observeEvent(input$gradeDismiss,{
         removeModal()
     })
     
+    #When the "Save Grade" button is pressed
     observeEvent(input$gradeSave,{
         rowNumber <- input$totalEditReviewGrades_rows_selected
         df <- reviewGradesData()
@@ -385,3 +393,4 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
