@@ -348,7 +348,7 @@ server <- function(input, output) {
                              , renderText(paste(rowData$First, rowData$Last))
                              , HTML("<b> Homework ID: </b>")
                              , renderText(rowData[1,3])
-                             , numericInput("hwGrade", "Grade:",  value = as.numeric(rowData$Grade))
+                             , numericInput("hwGrade", "Grade:",  value = as.numeric(rowData$Grade), max = 100)
                         )
                         , footer = fluidRow(
                             column(width = 6
@@ -371,11 +371,34 @@ server <- function(input, output) {
         )
     })
     
+    # Dismiss
     observeEvent(input$hwgradeDismiss,{
         removeModal()
     })
+    #When the "Save Grade" button is pressed
     observeEvent(input$hwgradeSave,{
-        # Write to Database and pull
+        rowNumber <- input$editHomeworkGrades_rows_selected
+        df <- homeworkGradesData()
+        rowData <- df[rowNumber, ]
+        newGrade <- as.character(input$hwGrade)
+        hw_ID <- rowData[1, 3]
+        
+        df <- df_students %>%
+            filter(first_name == rowData$First) %>%
+            filter(last_name == rowData$Last) 
+        
+        student_id <- df$student_id
+        
+        # Write to Database
+        sql_query <- paste0("update Shiny.dbo.homeworkGrades set grade = '", newGrade, "' where (homework_id = ", hw_ID, " and student_id = ", student_id, ")")
+        dbExecute(con, sql_query)
+        
+        # Background App Refresh
+        sql_query <- 'Select * from Shiny.dbo.homeworkGrades'
+        df_homeworkGrades <- dbGetQuery(con, sql_query)
+        reactive$df_homeworkGrades <- df_homeworkGrades
+        
+        showNotification("Changes Saved to Remote Database.", type = c("message"), duration = 3)
         removeModal()
     })
     

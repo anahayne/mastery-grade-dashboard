@@ -20,11 +20,11 @@ df_reviewGrades <- dbGetQuery(con, sql_query)
 sql_query <- 'Select * from Shiny.dbo.homeworkGrades' 
 df_homeworkGrades <- dbGetQuery(con, sql_query)
 
-reactive <- reactiveValues(df_reviewGrades = df_reviewGrades)
+reactive <- reactiveValues(df_reviewGrades = df_reviewGrades, df_homeworkGrades = df_homeworkGrades)
 
 # Get Homework Grades
 getHomeworkGrades <- reactive({
-  merge(df_homeworkGrades, df_students) %>% merge(df_homeworks) %>%
+  merge(reactive$df_homeworkGrades, df_students) %>% merge(df_homeworks) %>%
     mutate(firstLast = paste(first_name, last_name))
 }) 
 
