@@ -37,7 +37,7 @@ ui <- dashboardPage(
                 , HTML("<center><h1> Mastery Gradebook Dashboard </h1></center>")
                 , div(img(src="davidsonCollege.jpg"), style="text-align: center;")
                 , HTML("<center> <h3> Software Design, Group 3. <br> Gracie Petty, Abby Santiago, Ben Santiago, Brad Shook, Katie Turner, Ana Hayne & Owen Bezick </h3></center>")
-                , uiOutput("modal")
+                , uiOutput("authModal")
             )
             # View Review UI ----
             , tabItem(
@@ -83,21 +83,32 @@ ui <- dashboardPage(
 
 # Define server logic 
 server <- function(input, output) {
-    
-    output$modal <- renderUI({
+    # Authentication ----
+    output$authModal <- renderUI({
         showModal(
             modalDialog(title = "Authentication", easyClose = F, footer = actionBttn(inputId = "auth_save", label = "Continue")
                         , numericInput(inputId = "student_id"
                                        , label = "Enter your Davidson ID:"
-                                       , value = 801000000)
+                                       , value = 80100000)
             )
         )
     })
     
     auth_student_id <- reactive(input$student_id)
     
+    ls_student_id <- df_students %>%
+        distinct(student_id) %>% pull()
+    
     observeEvent(input$auth_save, {
-        removeModal()
+        if (input$student_id %in% ls_student_id){
+            name <- df_students %>%
+                filter(student_id == input$student_id) %>% select(first_name) %>% pull()
+            showNotification(paste("Welcome", name), type = "message")
+            removeModal()
+        } else {
+            showNotification(paste(as.character(input$student_id), "not found. Please try again."), type = "error")
+        }
+        
     })
     
     # View Review Server ---- 
