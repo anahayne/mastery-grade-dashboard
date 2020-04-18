@@ -103,7 +103,7 @@ server <- function(input, output) {
         if (input$student_id %in% ls_student_id){
             name <- df_students %>%
                 filter(student_id == input$student_id) %>% select(first_name) %>% pull()
-            showNotification(paste("Welcome", name), type = "message")
+            showNotification(paste("Welcome,", name, "!"), type = "message")
             removeModal()
         } else {
             showNotification(paste(as.character(input$student_id), "not found. Please try again."), type = "error")
@@ -140,15 +140,18 @@ server <- function(input, output) {
                     , multiple = TRUE)
     })
     
-    # DT output
-    output$totalReviewGrades <- renderDT({
-        req(input$reviewTopicPicker, input$reviewPicker)
+    # data
+    reviewData <- reactive({req(input$reviewTopicPicker, input$reviewPicker)
         auth_student_id <- auth_student_id()
         df <- getReviewGrades()
         df <- df %>%
             filter(student_id == as.numeric(auth_student_id)) %>%
             filter(review_id %in% input$reviewPicker, topic_id %in% input$reviewTopicPicker) %>%
             select( First = first_name, Last = last_name,`Review ID` = review_id, Topic = topic_id, Grade = grade)
+    })
+    # DT output
+    output$totalReviewGrades <- renderDT({
+        df <- reviewData()
         datatable(df, rownames = FALSE)
     })
     
@@ -156,19 +159,26 @@ server <- function(input, output) {
     output$gradeBar <- renderEcharts4r({
         req(input$reviewTopicPicker, input$reviewPicker)
         auth_student_id <- auth_student_id()
-        df <- getReviewGrades() %>%
-            filter(student_id == as.numeric(auth_student_id)) %>%
-            filter(review_id %in% input$reviewPicker, topic_id %in% input$reviewTopicPicker) %>%
-            select(grade) %>%
-            count(grade)
+        df <- reviewData() %>%
+            select(Grade) %>%
+            count(Grade)
+        
         graph_df <- as_data_frame(t(df)) %>% 
             mutate(chart = "")
         
+        apprentice <- df[1,2]
+        journey <- df[2,2]
+        master <- df[3,2]
+        
+        graph_df <- data_frame(A = c(0 + apprentice)
+                               , J = c(0 + journey)
+                               , M = c(0 + master)
+                               , chart = c(""))
         graph_df %>%
             e_chart(chart) %>%
-            e_bar("V1", name = "Apprentice") %>%
-            e_bar("V2", name = "Journeyman")  %>%
-            e_bar("V3", name = "Master") %>%
+            e_bar("A", name = "Apprentice") %>%
+            e_bar("J", name = "Journeyman")  %>%
+            e_bar("M", name = "Master") %>%
             e_theme("westeros") %>%
             e_tooltip() %>%
             e_legend(bottom = 0)
