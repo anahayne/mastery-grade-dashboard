@@ -14,10 +14,9 @@
 source("utils.R", local = T)
 source("libraries.R", local = TRUE)
 source("dataIntake.R", local = TRUE)
-
 # UI ----
 ui <- dashboardPage(
-    dashboardHeader(title = "Professor View" 
+    dashboardHeader(title = "Student View" 
     )
     # Sidebar ----
     , dashboardSidebar( 
@@ -38,18 +37,20 @@ ui <- dashboardPage(
                 , HTML("<center><h1> Mastery Gradebook Dashboard </h1></center>")
                 , div(img(src="davidsonCollege.jpg"), style="text-align: center;")
                 , HTML("<center> <h3> Software Design, Group 3. <br> Gracie Petty, Abby Santiago, Ben Santiago, Brad Shook, Katie Turner, Ana Hayne & Owen Bezick </h3></center>")
+                , uiOutput("modal")
             )
             # View Review UI ----
             , tabItem(
                 tabName = "reviewGrades"
                 ,fluidRow(
                     box(width = 12, title = "Filter:", status = "primary" 
-                        ,column(width = 6
-                                ,uiOutput("reviewStudentPicker")
-                        )
                         , column(width = 6
                                  ,uiOutput("reviewPicker")
                         )
+                        ,column(width = 6
+                                ,uiOutput("reviewTopicPicker")
+                        )
+                        
                     )
                 )
                 , fluidRow(
@@ -111,24 +112,41 @@ ui <- dashboardPage(
 
 # Define server logic 
 server <- function(input, output) {
-    # View Review Server ---- 
-    # List of students by ID
-    ls_studentsR <- reactive({
-        df <- getReviewGrades()
-        df %>% distinct(firstLast) %>% pull()
+    
+    output$modal <- renderUI({
+        showModal(
+            modalDialog(title = "Authentication", easyClose = F, footer = actionBttn(inputId = "auth_save", label = "Continue")
+                        , numericInput(inputId = "student_id"
+                                       , label = "Enter your Davidson ID:"
+                                       , value = 801000000)
+            )
+        )
     })
-    # List of students by first_name
+    
+    auth_student_id <- reactive(input$student_id)
+    
+    observeEvent(input$auth_save, {
+        removeModal()
+    })
+    
+    # View Review Server ---- 
     #List of reviews
     ls_reviews <- reactive({
         df <- getReviewGrades()
         df %>% distinct(review_id) %>% pull()
     })
-    # Student Picker
-    output$reviewStudentPicker <- renderUI({
-        pickerInput("reviewStudentPicker"
-                    ,"Student"
-                    , choices = ls_studentsR()
-                    , selected = ls_studentsR()
+    # List of topics
+    ls_review_topics <- reactive({
+        df <- getReviewGrades()
+        df %>% distinct(topic_id) %>% pull()
+    })
+    
+    # Topic Picker
+    output$reviewTopicPicker <- renderUI({
+        pickerInput("reviewTopicPicker"
+                    ,"Topic"
+                    , choices = ls_review_topics()
+                    , selected = ls_review_topics()
                     , multiple = TRUE)
     })
     # Review Picker
@@ -142,19 +160,23 @@ server <- function(input, output) {
     
     # DT output
     output$totalReviewGrades <- renderDT({
-        req(input$reviewStudentPicker, input$reviewPicker)
+        req(input$reviewTopicPicker, input$reviewPicker)
+        auth_student_id <- auth_student_id()
         df <- getReviewGrades()
         df <- df %>%
-            filter(review_id %in% input$reviewPicker, firstLast %in% input$reviewStudentPicker) %>%
+            filter(student_id == as.numeric(auth_student_id)) %>%
+            filter(review_id %in% input$reviewPicker, topic_id %in% input$reviewTopicPicker) %>%
             select( First = first_name, Last = last_name,`Review ID` = review_id, Topic = topic_id, Grade = grade)
         datatable(df, rownames = FALSE)
     })
     
     # Total Grades Chart
     output$gradeBar <- renderEcharts4r({
-        req(input$reviewStudentPicker, input$reviewPicker)
+        req(input$reviewTopicPicker, input$reviewPicker)
+        auth_student_id <- auth_student_id()
         df <- getReviewGrades() %>%
-            filter(review_id %in% input$reviewPicker, firstLast %in% input$reviewStudentPicker) %>%
+            filter(student_id == as.numeric(auth_student_id)) %>%
+            filter(review_id %in% input$reviewPicker, topic_id %in% input$reviewTopicPicker) %>%
             select(grade) %>%
             count(grade)
         graph_df <- as_data_frame(t(df)) %>% 
