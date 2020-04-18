@@ -66,45 +66,16 @@ ui <- dashboardPage(
             , tabItem(
                 tabName = "homeworkGrades"
                 , fluidRow(
-                    box(width = 12, title = "Filter:", status = "primary" 
-                        ,column(width = 6
-                                , uiOutput("hwStudentPicker")
-                        )
-                        , column(width = 6
-                                 ,uiOutput("hwPicker")
-                        )
+                    box(width = 6, title = "Filter:", status = "primary" 
+                        ,uiOutput("hwPicker")
                     )
                 )
                 , fluidRow(
-                    box(width = 6, status = "primary", height= "550", title = "Homework Grades"
+                    box(width = 6, status = "primary", title = "Homework Grades"
                         , DTOutput("homeworkGradeTable")
                     )
-                    , box(width = 6, status = "primary", height= "550", title = "Homework Averages"
-                          , echarts4rOutput("avgHomeworkGraph")
-                    )
                 )
             )
-            # Edit Review Grades ----
-            , tabItem(
-                tabName = "editReviewGrades"
-                , fluidRow(
-                    box(width = 12, status = "primary", title = "Edit Review Grades"
-                        , column(width = 12
-                                 , DTOutput("totalEditReviewGrades")
-                        )
-                    )
-                )
-            )
-            # Edit Homework UI ----
-            , tabItem(
-                tabName = "editHomeworkGrades"
-                , fluidRow(
-                    box(width = 12, status = "primary", title = "Edit Homework Grades"
-                        , DTOutput("editHomeworkGrades")
-                    )
-                )
-            )
-            
         )
     )
 )
@@ -193,24 +164,11 @@ server <- function(input, output) {
     })
     
     # View Homeworks Server -----
-    # List of students by firstLast
-    ls_studentsHW <- reactive({
-        df <- getHomeworkGrades()
-        df %>% distinct(firstLast) %>% pull()
-    })
     #List from homework
-    ls_homeworksHW <- reactive({
-        df <- getHomeworkGrades()
-        df %>% distinct(homework_id) %>% pull()
-    })
-    # Student Picker
-    output$hwStudentPicker <- renderUI({
-        pickerInput("hwStudentPicker"
-                    ,"Student"
-                    , choices = ls_studentsHW()
-                    , selected = ls_studentsHW()
-                    , multiple = TRUE)
-    })
+    ls_homeworksHW <- reactive(
+        getHomeworkGrades() %>%
+            distinct(homework_id) %>% pull()
+    )
     # Homework Picker
     output$hwPicker <- renderUI({
         pickerInput("hwPicker"
@@ -221,47 +179,17 @@ server <- function(input, output) {
     })
     # Table
     output$homeworkGradeTable <- renderDT({
-        req(input$hwStudentPicker, input$hwPicker)
+        req(input$hwPicker)
+        auth_student_id <- auth_student_id()
         df <- getHomeworkGrades()
         df  <- df %>% 
-            filter(firstLast %in% input$hwStudentPicker) %>%
+            filter(student_id == as.numeric(auth_student_id)) %>%
             filter(homework_id %in% input$hwPicker) %>%
             select(First = first_name, Last = last_name, `Homework ID` = homework_id, Grade= grade)
         
         datatable(df, rownames = FALSE)
     })
     
-    # Homework Average Graph
-    # Data
-    hwAvg <- reactive({
-        req(input$hwStudentPicker, input$hwPicker)
-        df <- getHomeworkGrades()
-        df  <- df %>% 
-            filter(firstLast %in% input$hwStudentPicker) %>%
-            filter(homework_id %in% input$hwPicker) %>%
-            group_by(student_id) %>%
-            mutate(homeworkAvg = mean(grade)/100)
-    })
-    # Graph
-    output$avgHomeworkGraph <- renderEcharts4r({
-        df <- hwAvg()
-        df %>%
-            e_chart(last_name) %>%
-            e_scatter(homeworkAvg, symbol_size = 10) %>%
-            e_theme("westeros") %>%
-            e_tooltip(formatter = e_tooltip_item_formatter(
-                style = c("percent"),
-                digits = 2
-            )
-            ) %>%
-            e_x_axis(axisLabel = list(interval = 0, rotate = 45)) %>%
-            e_y_axis(formatter = e_axis_formatter(
-                style = c("percent"),
-                digits = 2,
-            )
-            ) %>%
-            e_legend(show = F)
-    })
     
 }
 
