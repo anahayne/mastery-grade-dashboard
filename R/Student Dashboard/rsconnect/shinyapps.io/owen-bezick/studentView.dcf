@@ -1,0 +1,12 @@
+name: studentView
+title: studentView
+username:
+account: owen-bezick
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2142015
+bundleId: 3032415
+url: https://owen-bezick.shinyapps.io/StudentView/
+when: 1587247812.24554
+asMultiple: FALSE
+asStatic: FALSE
