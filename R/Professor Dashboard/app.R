@@ -16,7 +16,7 @@ source("dataIntake.R", local = TRUE)
 
 # UI ----
 ui <- dashboardPage(
-    dashboardHeader(title = "Professor View" 
+    dashboardHeader(title = "Student View" 
     )
     # Sidebar ----
     , dashboardSidebar( 
@@ -25,10 +25,6 @@ ui <- dashboardPage(
             , menuItem(tabName ="viewGrades", text = "View Grades", icon = icon("chalkboard")
                        , menuSubItem(tabName = "reviewGrades", text = "View Review Grades")
                        , menuSubItem(tabName = "homeworkGrades", text = "View Homework Grades")
-            )
-            , menuItem(tabName ="editGrades", text = "Edit Grades", icon = icon("chalkboard-teacher")
-                       , menuSubItem(tabName = "editReviewGrades", text = "Edit Review Grades")
-                       , menuSubItem(tabName = "editHomeworkGrades", text = "Edit Homework Grades")
             )
         )
     )
@@ -402,6 +398,7 @@ server <- function(input, output) {
         removeModal()
     })
     
+
 }
 
 # Run the application 
