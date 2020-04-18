@@ -89,6 +89,7 @@ ui <- dashboardPage(
             # Edit Review Grades ----
             , tabItem(
                 tabName = "editReviewGrades"
+                , actionBttn(inputId = "addReview", label = "Add Review")
                 , fluidRow(
                     box(width = 12, status = "primary", title = "Edit Review Grades"
                         , column(width = 12
@@ -325,8 +326,71 @@ server <- function(input, output) {
         removeModal()
     })
     
-    # Edit Homework Server ----
+    #
+    #  Add Review Button press ----
+    #
+    observeEvent(input$addReview, {
+        showModal(
+            modalDialog(title = "Add a Review",  easyClose = T
+                        , box(width = 12, status = "primary", title = "Review Information"
+                              , fluidRow(
+                                  column(width = 6
+                                         , numericInput(inputId = "addReviewID", label = "Review ID", value = 1 + max(df_reviews$review_id))
+                                         , dateInput(inputId = "addReviewStartDate", label = "Date Assigned", value = 1 + max(df_reviews$date_assigned))
+                                  )
+                                  , column(width = 6
+                                           , textInput(inputId = "addReviewTitle", label = "Review Title", value = "Title")
+                                           , dateInput(inputId = "addReviewEndDate", label = "Date Due", value = 1 + max(df_reviews$date_due))
+                                  )
+                                  , column(width = 12
+                                           , textAreaInput(inputId = "addReviewDesc", label = " Review Description", value = "Description"))
+                              )
+                        )
+                        , footer = fluidRow(
+                            column(width = 6
+                                   , actionBttn("saveReview"
+                                                , "Save"
+                                                , icon = icon("save")
+                                                , style = "material-flat"
+                                                , block = T
+                                   )
+                            )
+                            , column(width = 6
+                                     , actionBttn("addReviewDismiss"
+                                                  , "Dismiss"
+                                                  , icon = icon("close")
+                                                  , style = "material-flat"
+                                                  , block = T)
+                            )
+                        )
+            )
+        )
+    })
+    # Dismiss
+    observeEvent(input$addReviewDismiss,{
+        removeModal()
+    })
     
+    observeEvent(input$saveReview, {
+        con <- db_connect()
+        row <- data_frame(Review_id = c(as.numeric(input$addReviewID))
+                          , date_assigned = c(as.character(input$addReviewStartDate))
+                          , date_due = c(as.character(input$addReviewEndDate))
+                          , title = c(as.character(input$addReviewTitle))
+                          , description = c(as.character(input$addReviewDesc))
+        )
+        
+        query <- sqlAppendTable(con, "shiny.dbo.reviews", quotes(row), row.names = FALSE)
+        
+        query_character <- as.character(query)
+        noDouble <- gsub('"',"",query)
+        noNew <- gsub('\n'," ",noDouble)
+        dbSendQuery(con, noNew)
+        
+        showNotification(paste0("Review Added as: ", as.character(input$addReviewID)))
+    })
+    
+    # Edit Homework Server ----
     # DT output
     homeworkGradesData <- reactive({
         df <- getHomeworkGrades()
@@ -464,7 +528,7 @@ server <- function(input, output) {
         noNew <- gsub('\n'," ",noDouble)
         dbSendQuery(con, noNew)
         
-        showNotification(paste0("Homework Added as", as.character(input$hwAddTitle)))
+        showNotification(paste0("Homework Added as: ", as.character(input$hwAddTitle)))
     })
     
 }
