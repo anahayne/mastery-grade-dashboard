@@ -267,7 +267,7 @@ server <- function(input, output) {
                              , renderText(paste(rowData$First, rowData$Last))
                              , HTML("<b> Topic ID: </b>")
                              , renderText(rowData$Topic)
-                             , pickerInput("grade", "Grade:", choices = c("M", "J", "A"), selected = as.character(rowData$Grade))
+                             , pickerInput("grade", "Grade:", choices = c("M", "J", "A", "NA"), selected = as.character(rowData$Grade))
                         )
                         , footer = fluidRow(
                             column(width = 6
