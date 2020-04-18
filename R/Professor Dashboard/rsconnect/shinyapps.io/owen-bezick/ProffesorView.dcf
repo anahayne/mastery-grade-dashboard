@@ -5,8 +5,8 @@ account: owen-bezick
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2123835
-bundleId: 3023191
+bundleId: 3027677
 url: https://owen-bezick.shinyapps.io/ProffesorView/
-when: 1587058903.06412
+when: 1587140174.34774
 asMultiple: FALSE
 asStatic: FALSE

@@ -269,7 +269,7 @@ server <- function(input, output) {
                              , renderText(paste(rowData$First, rowData$Last))
                              , HTML("<b> Topic ID: </b>")
                              , renderText(rowData$Topic)
-                             , pickerInput("grade", "Grade:", choices = c("M", "J", "A"), selected = as.character(rowData$Grade))
+                             , pickerInput("grade", "Grade:", choices = c("M", "J", "A", "NA"), selected = as.character(rowData$Grade))
                         )
                         , footer = fluidRow(
                             column(width = 6
@@ -326,6 +326,7 @@ server <- function(input, output) {
         removeModal()
     })
     
+
     #
     #  Add Review Button press ----
     #
@@ -530,7 +531,6 @@ server <- function(input, output) {
         
         showNotification(paste0("Homework Added as: ", as.character(input$hwAddTitle)))
     })
-    
 }
 
 # Run the application 
