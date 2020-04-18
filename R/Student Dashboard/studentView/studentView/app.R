@@ -16,7 +16,7 @@ source("dataIntake.R", local = TRUE)
 
 # UI ----
 ui <- dashboardPage(
-    dashboardHeader(title = "Student View" 
+    dashboardHeader(title = "Professor View" 
     )
     # Sidebar ----
     , dashboardSidebar( 
@@ -25,6 +25,10 @@ ui <- dashboardPage(
             , menuItem(tabName ="viewGrades", text = "View Grades", icon = icon("chalkboard")
                        , menuSubItem(tabName = "reviewGrades", text = "View Review Grades")
                        , menuSubItem(tabName = "homeworkGrades", text = "View Homework Grades")
+            )
+            , menuItem(tabName ="editGrades", text = "Edit Grades", icon = icon("chalkboard-teacher")
+                       , menuSubItem(tabName = "editReviewGrades", text = "Edit Review Grades")
+                       , menuSubItem(tabName = "editHomeworkGrades", text = "Edit Homework Grades")
             )
         )
     )
@@ -239,6 +243,165 @@ server <- function(input, output) {
             ) %>%
             e_legend(show = F)
     })
+    # Edit Review Server ----
+    # DT output
+    reviewGradesData <- reactive({
+        df <- getReviewGrades()
+        df <- df %>%
+            select(First = first_name, Last = last_name,`Review Id` = review_id,Topic = topic_id, Grade = grade)
+    })
+    
+    output$totalEditReviewGrades <- renderDT({
+        df <- reviewGradesData()
+        datatable(df, rownames = FALSE, selection = list(mode = 'single', target = 'row'), filter = 'top', caption = "Click a Row to Edit")
+    })
+    
+    observeEvent(input$totalEditReviewGrades_rows_selected,{
+        rowNumber <- input$totalEditReviewGrades_rows_selected
+        df <- reviewGradesData()
+        rowData <- df[rowNumber, ]
+        showModal(
+            modalDialog(title = "Edit Grade", easyClose = T
+                        ,box(width = 12, status = "primary"
+                             , HTML("<b> Name: </b>")
+                             , renderText(paste(rowData$First, rowData$Last))
+                             , HTML("<b> Topic ID: </b>")
+                             , renderText(rowData$Topic)
+                             , pickerInput("grade", "Grade:", choices = c("M", "J", "A"), selected = as.character(rowData$Grade))
+                        )
+                        , footer = fluidRow(
+                            column(width = 6
+                                   , actionBttn("gradeSave"
+                                                , "Save"
+                                                , icon = icon("save")
+                                                , style = "material-flat"
+                                                , block = T
+                                   )
+                            )
+                            , column(width = 6
+                                     , actionBttn("gradeDismiss"
+                                                  , "Dismiss"
+                                                  , icon = icon("close")
+                                                  , style = "material-flat"
+                                                  , block = T)
+                            )
+                        )
+            )
+        )
+    })
+    
+    # When the "Grade Dismiss" button is pressed
+    observeEvent(input$gradeDismiss,{
+        removeModal()
+    })
+    
+    #When the "Save Grade" button is pressed
+    observeEvent(input$gradeSave,{
+        rowNumber <- input$totalEditReviewGrades_rows_selected
+        df <- reviewGradesData()
+        rowData <- df[rowNumber, ]
+        topic_id <- rowData$Topic
+        newGrade <- as.character(input$grade)
+        review_id <- rowData[1, 3]
+        
+        df <- df_students %>%
+            filter(first_name == rowData$First) %>%
+            filter(last_name == rowData$Last) 
+        
+        student_id <- df$student_id
+        
+        # Write to Database
+        sql_query <- paste0("update Shiny.dbo.reviewGrades set grade = '", newGrade, "' where (topic_id = ", topic_id, " and student_id = ", student_id, " and review_id = ", review_id, ")")
+        dbExecute(con, sql_query)
+        
+        # Background App Refresh
+        sql_query <- 'Select * from Shiny.dbo.reviewGrades'
+        df_reviewGrades <- dbGetQuery(con, sql_query)
+        reactive$df_reviewGrades <- df_reviewGrades
+        
+        showNotification("Changes Saved to Remote Database.", type = c("message"), duration = 3)
+        
+        removeModal()
+    })
+    
+    # Edit Homework Server ----
+    # DT output
+    homeworkGradesData <- reactive({
+        df <- getHomeworkGrades()
+        df <- df %>%
+            select(First = first_name, Last = last_name,`Homework Id` = homework_id, Grade = grade)
+    })
+    
+    output$editHomeworkGrades <- renderDT({
+        df <- homeworkGradesData()
+        datatable(df, rownames = FALSE, selection = list(mode = 'single', target = 'row'), filter = 'top', caption = "Click a Row to Edit")
+    })
+    
+    observeEvent(input$editHomeworkGrades_rows_selected,{
+        rowNumber <- input$editHomeworkGrades_rows_selected
+        df <- homeworkGradesData()
+        rowData <- df[rowNumber, ]
+        showModal(
+            modalDialog(title = "Edit Grade", easyClose = T
+                        ,box(width = 12, status = "primary"
+                             , HTML("<b> Name: </b>")
+                             , renderText(paste(rowData$First, rowData$Last))
+                             , HTML("<b> Homework ID: </b>")
+                             , renderText(rowData[1,3])
+                             , numericInput("hwGrade", "Grade:",  value = as.numeric(rowData$Grade), max = 100)
+                        )
+                        , footer = fluidRow(
+                            column(width = 6
+                                   , actionBttn("hwgradeSave"
+                                                , "Save"
+                                                , icon = icon("save")
+                                                , style = "material-flat"
+                                                , block = T
+                                   )
+                            )
+                            , column(width = 6
+                                     , actionBttn("hwgradeDismiss"
+                                                  , "Dismiss"
+                                                  , icon = icon("close")
+                                                  , style = "material-flat"
+                                                  , block = T)
+                            )
+                        )
+            )
+        )
+    })
+    
+    # Dismiss
+    observeEvent(input$hwgradeDismiss,{
+        removeModal()
+    })
+    #When the "Save Grade" button is pressed
+    observeEvent(input$hwgradeSave,{
+        rowNumber <- input$editHomeworkGrades_rows_selected
+        df <- homeworkGradesData()
+        rowData <- df[rowNumber, ]
+        newGrade <- as.character(input$hwGrade)
+        hw_ID <- rowData[1, 3]
+        
+        df <- df_students %>%
+            filter(first_name == rowData$First) %>%
+            filter(last_name == rowData$Last) 
+        
+        student_id <- df$student_id
+        
+        # Write to Database
+        sql_query <- paste0("update Shiny.dbo.homeworkGrades set grade = '", newGrade, "' where (homework_id = ", hw_ID, " and student_id = ", student_id, ")")
+        dbExecute(con, sql_query)
+        
+        # Background App Refresh
+        sql_query <- 'Select * from Shiny.dbo.homeworkGrades'
+        df_homeworkGrades <- dbGetQuery(con, sql_query)
+        reactive$df_homeworkGrades <- df_homeworkGrades
+        
+        showNotification("Changes Saved to Remote Database.", type = c("message"), duration = 3)
+        removeModal()
+    })
+    
 }
 
 # Run the application 
