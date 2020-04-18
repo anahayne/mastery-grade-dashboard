@@ -16,7 +16,7 @@ source("dataIntake.R", local = TRUE)
 
 # UI ----
 ui <- dashboardPage(
-    dashboardHeader(title = "Student View" 
+    dashboardHeader(title = "Professor View" 
     )
     # Sidebar ----
     , dashboardSidebar( 
@@ -25,6 +25,10 @@ ui <- dashboardPage(
             , menuItem(tabName ="viewGrades", text = "View Grades", icon = icon("chalkboard")
                        , menuSubItem(tabName = "reviewGrades", text = "View Review Grades")
                        , menuSubItem(tabName = "homeworkGrades", text = "View Homework Grades")
+            )
+            , menuItem(tabName ="editGrades", text = "Edit Grades", icon = icon("chalkboard-teacher")
+                       , menuSubItem(tabName = "editReviewGrades", text = "Edit Review Grades")
+                       , menuSubItem(tabName = "editHomeworkGrades", text = "Edit Homework Grades")
             )
         )
     )
@@ -85,6 +89,7 @@ ui <- dashboardPage(
             # Edit Review Grades ----
             , tabItem(
                 tabName = "editReviewGrades"
+                , actionBttn(inputId = "addReview", label = "Add Review")
                 , fluidRow(
                     box(width = 12, status = "primary", title = "Edit Review Grades"
                         , column(width = 12
@@ -96,6 +101,7 @@ ui <- dashboardPage(
             # Edit Homework UI ----
             , tabItem(
                 tabName = "editHomeworkGrades"
+                , actionBttn(inputId = "addHW", label = "Add Homework Assignment")
                 , fluidRow(
                     box(width = 12, status = "primary", title = "Edit Homework Grades"
                         , DTOutput("editHomeworkGrades")
@@ -320,6 +326,71 @@ server <- function(input, output) {
         removeModal()
     })
     
+
+    #
+    #  Add Review Button press ----
+    #
+    observeEvent(input$addReview, {
+        showModal(
+            modalDialog(title = "Add a Review",  easyClose = T
+                        , box(width = 12, status = "primary", title = "Review Information"
+                              , fluidRow(
+                                  column(width = 6
+                                         , numericInput(inputId = "addReviewID", label = "Review ID", value = 1 + max(df_reviews$review_id))
+                                         , dateInput(inputId = "addReviewStartDate", label = "Date Assigned", value = 1 + max(df_reviews$date_assigned))
+                                  )
+                                  , column(width = 6
+                                           , textInput(inputId = "addReviewTitle", label = "Review Title", value = "Title")
+                                           , dateInput(inputId = "addReviewEndDate", label = "Date Due", value = 1 + max(df_reviews$date_due))
+                                  )
+                                  , column(width = 12
+                                           , textAreaInput(inputId = "addReviewDesc", label = " Review Description", value = "Description"))
+                              )
+                        )
+                        , footer = fluidRow(
+                            column(width = 6
+                                   , actionBttn("saveReview"
+                                                , "Save"
+                                                , icon = icon("save")
+                                                , style = "material-flat"
+                                                , block = T
+                                   )
+                            )
+                            , column(width = 6
+                                     , actionBttn("addReviewDismiss"
+                                                  , "Dismiss"
+                                                  , icon = icon("close")
+                                                  , style = "material-flat"
+                                                  , block = T)
+                            )
+                        )
+            )
+        )
+    })
+    # Dismiss
+    observeEvent(input$addReviewDismiss,{
+        removeModal()
+    })
+    
+    observeEvent(input$saveReview, {
+        con <- db_connect()
+        row <- data_frame(Review_id = c(as.numeric(input$addReviewID))
+                          , date_assigned = c(as.character(input$addReviewStartDate))
+                          , date_due = c(as.character(input$addReviewEndDate))
+                          , title = c(as.character(input$addReviewTitle))
+                          , description = c(as.character(input$addReviewDesc))
+        )
+        
+        query <- sqlAppendTable(con, "shiny.dbo.reviews", quotes(row), row.names = FALSE)
+        
+        query_character <- as.character(query)
+        noDouble <- gsub('"',"",query)
+        noNew <- gsub('\n'," ",noDouble)
+        dbSendQuery(con, noNew)
+        
+        showNotification(paste0("Review Added as: ", as.character(input$addReviewID)))
+    })
+    
     # Edit Homework Server ----
     # DT output
     homeworkGradesData <- reactive({
@@ -398,9 +469,69 @@ server <- function(input, output) {
         removeModal()
     })
     
-
+    #
+    #  Add HW Button press ----
+    #
+    observeEvent(input$addHW, {
+        showModal(
+            modalDialog(title = "Add a Homework",  easyClose = T
+                        , box(width = 12, status = "primary", title = "Homework Information"
+                              , fluidRow(
+                                  column(width = 6
+                                         , numericInput(inputId = "hwAddID", label = "Homework ID", value = 1 + max(df_homeworks$homework_id))
+                                         , dateInput(inputId = "addHWStartDate", label = "Date Assigned", value = 1 + max(df_homeworks$date_assigned))
+                                  )
+                                  , column(width = 6
+                                           , textInput(inputId = "hwAddTitle", label = "Homework Title", value = "Title")
+                                           , dateInput(inputId = "addHWEndDate", label = "Date Due", value = 1 + max(df_homeworks$date_due))
+                                  )
+                                  , column(width = 12
+                                           , textAreaInput(inputId = "hwAddDesc", label = " Homework Description", value = "Description"))
+                              )
+                        )
+                        , footer = fluidRow(
+                            column(width = 6
+                                   , actionBttn("saveHW"
+                                                , "Save"
+                                                , icon = icon("save")
+                                                , style = "material-flat"
+                                                , block = T
+                                   )
+                            )
+                            , column(width = 6
+                                     , actionBttn("hwAddDismiss"
+                                                  , "Dismiss"
+                                                  , icon = icon("close")
+                                                  , style = "material-flat"
+                                                  , block = T)
+                            )
+                        )
+            )
+        )
+    })
+    # Dismiss
+    observeEvent(input$hwAddDismiss,{
+        removeModal()
+    })
+    observeEvent(input$saveHW, {
+        con <- db_connect()
+        row <- data_frame(homework_id = c(as.numeric(input$hwAddID))
+                               , date_assigned = c(as.character(input$addHWStartDate))
+                               , date_due = c(as.character(input$addHWEndDate))
+                               , title = c(as.character(input$hwAddTitle))
+                               , description = c(as.character(input$hwAddDesc))
+        )
+        
+        query <- sqlAppendTable(con, "shiny.dbo.homeworks", quotes(row), row.names = FALSE)
+        
+        query_character <- as.character(query)
+        noDouble <- gsub('"',"",query)
+        noNew <- gsub('\n'," ",noDouble)
+        dbSendQuery(con, noNew)
+        
+        showNotification(paste0("Homework Added as: ", as.character(input$hwAddTitle)))
+    })
 }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
