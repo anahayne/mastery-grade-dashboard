@@ -162,14 +162,19 @@ server <- function(input, output) {
             filter(review_id %in% input$reviewPicker, firstLast %in% input$reviewStudentPicker) %>%
             select(grade) %>%
             count(grade)
-        graph_df <- as_data_frame(t(df)) %>% 
-            mutate(chart = "")
+        apprentice <- df[1,2]
+        journey <- df[2,2]
+        master <- df[3,2]
         
+        graph_df <- data_frame(A = c(0 + apprentice)
+                               , J = c(0 + journey)
+                               , M = c(0 + master)
+                               , chart = c(""))
         graph_df %>%
             e_chart(chart) %>%
-            e_bar("V1", name = "Apprentice") %>%
-            e_bar("V2", name = "Journeyman")  %>%
-            e_bar("V3", name = "Master") %>%
+            e_bar("A", name = "Apprentice") %>%
+            e_bar("J", name = "Journeyman")  %>%
+            e_bar("M", name = "Master") %>%
             e_theme("westeros") %>%
             e_tooltip() %>%
             e_legend(bottom = 0)
