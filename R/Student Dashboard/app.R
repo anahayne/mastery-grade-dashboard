@@ -13,7 +13,7 @@
 # Source Libraries
 source("utils.R", local = T)
 source("libraries.R", local = TRUE)
-source("dataIntake.R", local = TRUE)
+source("dataintake.R", local = TRUE)
 # UI ----
 ui <- dashboardPage(
     dashboardHeader(title = "Student View" 
@@ -162,9 +162,6 @@ server <- function(input, output) {
         df <- reviewData() %>%
             select(Grade) %>%
             count(Grade)
-        
-        graph_df <- as_data_frame(t(df)) %>% 
-            mutate(chart = "")
         
         apprentice <- df[1,2]
         journey <- df[2,2]
