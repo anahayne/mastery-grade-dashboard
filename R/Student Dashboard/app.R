@@ -122,18 +122,27 @@ server <- function(input, output) {
   output$profileRow <- renderUI({
     df <- df_students %>%
       filter(student_id == auth_student_id())
-    fluidRow(
-      column(width = 4
-             , box(width= 12, title = "Information"
-             , HTML("<b> Student ID: </b>")
-             , df$student_id
-             , HTML("<b> Name: </b>")
-             , paste(df$first_name, df$last_name)
-             ,  HTML("<b> Photo: </b>")
-             , img(src= paste0(as.character(df$student_id), ".png"))
-             )
-      )
+    
+    box(width= 4, title = "Information"
+        , column(width = 12
+                 , fluidRow(
+                   HTML("<b> Student ID: </b>")
+                   , df$student_id
+                 )
+                 , fluidRow(
+                   HTML("<b> Name: </b>")
+                   , paste(df$first_name, df$last_name)
+                 )
+                 , fluidRow(
+                   HTML("<b> Photo: </b>")
+                 )
+                 , fluidRow(
+                   img(src= paste0(as.character(df$student_id), ".jpg"))
+                 )
+        )
     )
+    
+    
   })
   # View Review Server ---- 
   #List of reviews
