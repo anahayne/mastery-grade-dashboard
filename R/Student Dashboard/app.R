@@ -22,6 +22,7 @@ ui <- dashboardPage(
     , dashboardSidebar( 
         sidebarMenu(
             menuItem(tabName = "home", text = "Home", icon = icon("home"))
+            , menuItem(tabName = "profile", text = "Profile", icon = icon("user"))
             , menuItem(tabName ="viewGrades", text = "View Grades", icon = icon("chalkboard")
                        , menuSubItem(tabName = "reviewGrades", text = "View Review Grades")
                        , menuSubItem(tabName = "homeworkGrades", text = "View Homework Grades")
