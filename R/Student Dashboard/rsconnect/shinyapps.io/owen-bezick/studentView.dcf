@@ -1,12 +1,12 @@
 name: studentView
-title: studentView
+title: Student Dashboard
 username:
 account: owen-bezick
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2142015
-bundleId: 3032415
+bundleId: 3038765
 url: https://owen-bezick.shinyapps.io/StudentView/
-when: 1587247812.24554
+when: 1587388648.33389
 asMultiple: FALSE
 asStatic: FALSE
