@@ -43,6 +43,7 @@ ui <- dashboardPage(
       , tabItem(
         tabName = "profile"
         , uiOutput("profileRow")
+        , uiOutput("PprofileRow")
       )
       # View Review UI ----
       , tabItem(
@@ -123,7 +124,7 @@ server <- function(input, output) {
     df <- df_students %>%
       filter(student_id == auth_student_id())
     
-    box(width= 4, title = "Information"
+    box(width= 4, title = " Student Information"
         , column(width = 12
                  , fluidRow(
                    HTML("<b> Student ID: </b>")
@@ -139,6 +140,26 @@ server <- function(input, output) {
                  , fluidRow(
                    img(src= paste0(as.character(df$student_id), ".jpg"))
                  )
+        )
+    )
+  })
+  
+  output$PprofileRow <- renderUI({
+    box(width= 4, title = " Professor Information"
+        , column(width = 12
+                 , fluidRow(
+                   HTML("<b> Dr. yourProfessor </b>"),
+                 )
+                 , fluidRow(
+                   HTML("<b> Email: </b>"),
+                   HTML("yourProfessor@davidson.edu")
+                 )
+                 , fluidRow(
+                   HTML("<b> Office Hours: </b>")
+                   , HTML("MWF: 9:30- 11")
+                   , HTML("TTh: 1:40-3:00")
+                 )
+                
         )
     )
     
