@@ -1,5 +1,5 @@
 # Project: Mastery Grade System
-# Professor Side Dashboard 
+# Student Side Dashboard 
 # app.R
 #
 # 4/16/20 -- First release (MIT License), in class demo
@@ -26,6 +26,7 @@ ui <- dashboardPage(
       , menuItem(tabName ="viewGrades", text = "View Grades", icon = icon("chalkboard")
                  , menuSubItem(tabName = "reviewGrades", text = "View Review Grades")
                  , menuSubItem(tabName = "homeworkGrades", text = "View Homework Grades")
+                 , menuSubItem(tabName = "gradeCalculator", text = "Grade Calculator")
       )
     )
   )
@@ -80,6 +81,19 @@ ui <- dashboardPage(
           box(width = 6, status = "primary", title = "Homework Grades"
               , DTOutput("homeworkGradeTable")
           )
+        )
+      )
+      
+      #Grade Calculator UI
+      , tabItem(
+        tabName = "gradeCalculator"
+        , fluidPage(
+          box(width = 14, title = "Grade Calculator")
+        , div(img(src="gradeScale.jpg"), style="text-align: center;")
+        , box(width = 14, title = "Current Grade Information")
+        , HTML("<p> Homework Average: </p>")
+        , HTML("<p> Topics Mastered: </p>")
+        
         )
       )
     )
@@ -144,6 +158,7 @@ server <- function(input, output) {
     )
   })
   
+  #Professor Contact Information
   output$PprofileRow <- renderUI({
     box(width= 4, title = " Professor Information"
         , column(width = 12
@@ -249,6 +264,7 @@ server <- function(input, output) {
                 , selected = ls_homeworksHW()
                 , multiple = TRUE)
   })
+  
   # Table
   output$homeworkGradeTable <- renderDT({
     req(input$hwPicker)
@@ -262,8 +278,10 @@ server <- function(input, output) {
     datatable(df, rownames = FALSE)
   })
   
+
   
 }
+
 
 # Run the application 
 shinyApp(ui = ui, server = server)
