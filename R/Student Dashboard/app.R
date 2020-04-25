@@ -16,6 +16,8 @@ source("libraries.R", local = TRUE)
 source("dataintake.R", local = TRUE)
 # UI ----
 ui <- dashboardPage(
+  skin = "red",
+  
   dashboardHeader(title = "Student View" 
   )
   # Sidebar ----
