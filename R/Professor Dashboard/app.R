@@ -91,7 +91,7 @@ ui <- dashboardPage(
             # Edit Review Grades ----
             , tabItem(
                 tabName = "editReviewGrades"
-                , actionBttn(inputId = "addReview", label = "Add Review")
+                , actionBttn(inputId = "addReview", label = "Add Review", style = "fill", color = "danger", block = T)
                 , fluidRow(
                     box(width = 12, status = "danger", title = "Edit Review Grades"
                         , column(width = 12
@@ -103,7 +103,7 @@ ui <- dashboardPage(
             # Edit Homework UI ----
             , tabItem(
                 tabName = "editHomeworkGrades"
-                , actionBttn(inputId = "addHW", label = "Add Homework Assignment")
+                , actionBttn(inputId = "addHW", label = "Add Homework Assignment", style = "fill", color = "danger", block = T)
                 , fluidRow(
                     box(width = 12, status = "danger", title = "Edit Homework Grades"
                         , DTOutput("editHomeworkGrades")
