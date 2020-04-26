@@ -99,7 +99,7 @@ ui <- dashboardPage(
         )
         , fluidRow(
           box(width = 12, title = "Grade Calculator", status = "danger"
-              , div(img(src="gradeScale.jpg"), style="text-align: center;")
+              , div(img(src="gradeScale.jpg", height = "100%", width = "100%"), style="text-align: center;")
           )
         )
       )
@@ -149,8 +149,8 @@ server <- function(input, output) {
     fluidRow(
       column(width = 1)
       , column(width = 5
-             , box(width= 12, title = "Student Information", status = "danger"
-                   , column(width = 6
+             , box(width= 14, title = "Student Information", status = "danger"
+                   , column(width = 7
                             , fluidRow(
                               HTML(paste0("<b>", paste(df$first_name, df$last_name), "</b>"))
                             )
@@ -158,7 +158,7 @@ server <- function(input, output) {
                               img(src= paste0(as.character(df$student_id), ".jpg"))
                             )
                    )
-                   , column(width = 6
+                   , column(width = 7
                             , br()
                             , fluidRow(
                               HTML("<b> Student ID: </b>")
@@ -173,8 +173,8 @@ server <- function(input, output) {
              )
       )
       ,  column(width = 5,
-                box(width= 12, title = "Professor Information", status = "danger"
-                    , column(width = 6
+                box(width= 14, title = "Professor Information", status = "danger"
+                    , column(width = 7
                              , fluidRow(
                                HTML("<b> Dr. Professorson </b>"),
                              )
@@ -182,7 +182,7 @@ server <- function(input, output) {
                                img(src= "mascot.jpg")
                              )
                     )
-                    , column(width = 6
+                    , column(width = 7
                              , br()
                              , fluidRow(
                                HTML("<b> Email: </b>"),
