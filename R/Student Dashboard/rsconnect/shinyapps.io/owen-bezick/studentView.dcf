@@ -5,8 +5,8 @@ account: owen-bezick
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2142015
-bundleId: 3067828
+bundleId: 3067860
 url: https://owen-bezick.shinyapps.io/StudentView/
-when: 1587921994.12924
+when: 1587922576.3533
 asMultiple: FALSE
 asStatic: FALSE
