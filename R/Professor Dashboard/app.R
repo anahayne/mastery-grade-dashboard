@@ -48,7 +48,7 @@ ui <- dashboardPage(
             , tabItem(
                 tabName = "reviewGrades"
                 ,fluidRow(
-                    box(width = 12, title = "Filter:", status = "primary" 
+                    box(width = 12, title = "Filter:", status = "danger" 
                         ,column(width = 6
                                 ,uiOutput("reviewStudentPicker")
                         )
@@ -58,10 +58,10 @@ ui <- dashboardPage(
                     )
                 )
                 , fluidRow(
-                    box(width = 6, status = "primary", title = "Review Grades", height = "550"
+                    box(width = 6, status = "danger", title = "Review Grades", height = "550"
                         , DTOutput("totalReviewGrades")
                     )
-                    , box(width = 6, height = "550", stauts = "primary", title = "Total Grades", status = "primary"
+                    , box(width = 6, height = "550", stauts = "danger", title = "Total Grades", status = "danger"
                           , echarts4rOutput("gradeBar"))
                 )
             )
@@ -70,7 +70,7 @@ ui <- dashboardPage(
             , tabItem(
                 tabName = "homeworkGrades"
                 , fluidRow(
-                    box(width = 12, title = "Filter:", status = "primary" 
+                    box(width = 12, title = "Filter:", status = "danger" 
                         ,column(width = 6
                                 , uiOutput("hwStudentPicker")
                         )
@@ -80,10 +80,10 @@ ui <- dashboardPage(
                     )
                 )
                 , fluidRow(
-                    box(width = 6, status = "primary", height= "550", title = "Homework Grades"
+                    box(width = 6, status = "danger", height= "550", title = "Homework Grades"
                         , DTOutput("homeworkGradeTable")
                     )
-                    , box(width = 6, status = "primary", height= "550", title = "Homework Averages"
+                    , box(width = 6, status = "danger", height= "550", title = "Homework Averages"
                           , echarts4rOutput("avgHomeworkGraph")
                     )
                 )
@@ -91,9 +91,9 @@ ui <- dashboardPage(
             # Edit Review Grades ----
             , tabItem(
                 tabName = "editReviewGrades"
-                , actionBttn(inputId = "addReview", label = "Add Review")
+                , actionBttn(inputId = "addReview", label = "Add Review", style = "fill", color = "danger", block = T)
                 , fluidRow(
-                    box(width = 12, status = "primary", title = "Edit Review Grades"
+                    box(width = 12, status = "danger", title = "Edit Review Grades"
                         , column(width = 12
                                  , DTOutput("totalEditReviewGrades")
                         )
@@ -103,9 +103,9 @@ ui <- dashboardPage(
             # Edit Homework UI ----
             , tabItem(
                 tabName = "editHomeworkGrades"
-                , actionBttn(inputId = "addHW", label = "Add Homework Assignment")
+                , actionBttn(inputId = "addHW", label = "Add Homework Assignment", style = "fill", color = "danger", block = T)
                 , fluidRow(
-                    box(width = 12, status = "primary", title = "Edit Homework Grades"
+                    box(width = 12, status = "danger", title = "Edit Homework Grades"
                         , DTOutput("editHomeworkGrades")
                     )
                 )
@@ -262,7 +262,9 @@ server <- function(input, output) {
     
     output$totalEditReviewGrades <- renderDT({
         df <- reviewGradesData()
-        datatable(df, rownames = FALSE, selection = list(mode = 'single', target = 'row'), filter = 'top', caption = "Click a Row to Edit")
+        datatable(df, rownames = FALSE
+                  , selection = list(mode = 'single', target = 'row')
+                  , filter = 'top', caption = "Click a Row to Edit")
     })
     
     observeEvent(input$totalEditReviewGrades_rows_selected,{
@@ -271,12 +273,13 @@ server <- function(input, output) {
         rowData <- df[rowNumber, ]
         showModal(
             modalDialog(title = "Edit Grade", easyClose = T
-                        ,box(width = 12, status = "primary"
+                        ,box(width = 12, status = "danger"
                              , HTML("<b> Name: </b>")
                              , renderText(paste(rowData$First, rowData$Last))
                              , HTML("<b> Topic ID: </b>")
                              , renderText(rowData$Topic)
-                             , pickerInput("grade", "Grade:", choices = c("M", "J", "A", "NA"), selected = as.character(rowData$Grade))
+                             , pickerInput("grade", "Grade:", choices = c("M", "J", "A", "NA")
+                                           , selected = as.character(rowData$Grade))
                         )
                         , footer = fluidRow(
                             column(width = 6
@@ -340,7 +343,7 @@ server <- function(input, output) {
     observeEvent(input$addReview, {
         showModal(
             modalDialog(title = "Add a Review",  easyClose = T
-                        , box(width = 12, status = "primary", title = "Review Information"
+                        , box(width = 12, status = "danger", title = "Review Information"
                               , fluidRow(
                                   column(width = 6
                                          , numericInput(inputId = "addReviewID", label = "Review ID", value = 1 + max(df_reviews$review_id))
@@ -360,6 +363,7 @@ server <- function(input, output) {
                                                 , "Save"
                                                 , icon = icon("save")
                                                 , style = "material-flat"
+                                                , color = "danger"
                                                 , block = T
                                    )
                             )
@@ -368,6 +372,7 @@ server <- function(input, output) {
                                                   , "Dismiss"
                                                   , icon = icon("close")
                                                   , style = "material-flat"
+                                                  , color = "danger"
                                                   , block = T)
                             )
                         )
@@ -417,7 +422,7 @@ server <- function(input, output) {
         rowData <- df[rowNumber, ]
         showModal(
             modalDialog(title = "Edit Grade", easyClose = T
-                        ,box(width = 12, status = "primary"
+                        ,box(width = 12, status = "danger"
                              , HTML("<b> Name: </b>")
                              , renderText(paste(rowData$First, rowData$Last))
                              , HTML("<b> Homework ID: </b>")
@@ -431,6 +436,7 @@ server <- function(input, output) {
                                                 , icon = icon("save")
                                                 , style = "material-flat"
                                                 , block = T
+                                                , color = "danger"
                                    )
                             )
                             , column(width = 6
@@ -438,6 +444,7 @@ server <- function(input, output) {
                                                   , "Dismiss"
                                                   , icon = icon("close")
                                                   , style = "material-flat"
+                                                  , color = "danger"
                                                   , block = T)
                             )
                         )
@@ -482,7 +489,7 @@ server <- function(input, output) {
     observeEvent(input$addHW, {
         showModal(
             modalDialog(title = "Add a Homework",  easyClose = T
-                        , box(width = 12, status = "primary", title = "Homework Information"
+                        , box(width = 12, status = "danger", title = "Homework Information"
                               , fluidRow(
                                   column(width = 6
                                          , numericInput(inputId = "hwAddID", label = "Homework ID", value = 1 + max(df_homeworks$homework_id))
@@ -503,6 +510,7 @@ server <- function(input, output) {
                                                 , icon = icon("save")
                                                 , style = "material-flat"
                                                 , block = T
+                                                , color = "danger"
                                    )
                             )
                             , column(width = 6
@@ -510,7 +518,9 @@ server <- function(input, output) {
                                                   , "Dismiss"
                                                   , icon = icon("close")
                                                   , style = "material-flat"
+                                                  , color = "danger"
                                                   , block = T)
+                                     
                             )
                         )
             )
