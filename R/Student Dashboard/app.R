@@ -84,21 +84,25 @@ ui <- dashboardPage(
         )
       )
       
-      #Grade Calculator UI
+      # Grade Calculator UI ----
       , tabItem(
         tabName = "gradeCalculator"
-        , fluidPage(
-          box(width = 14, title = "Grade Calculator")
-        , div(img(src="gradeScale.jpg"), style="text-align: center;")
-        , box(width = 14, title = "Current Grade Information")
-        , HTML("<p> Homework Average: </p>")
-        , HTML("<p> Topics Mastered: </p>")
-        
+        , fluidRow(
+          box(width = 12, title = "Current Grade Information"
+              , valueBoxOutput("homeworkAVG")
+              , valueBoxOutput("totalMastered")
+          )
+        )
+        , fluidRow(
+          box(width = 12, title = "Grade Calculator"
+              , div(img(src="gradeScale.jpg"), style="text-align: center;")
+          )
         )
       )
     )
   )
 )
+
 
 
 # Define server logic 
@@ -174,7 +178,6 @@ server <- function(input, output) {
                    , HTML("MWF: 9:30- 11")
                    , HTML("TTh: 1:40-3:00")
                  )
-                
         )
     )
     
@@ -278,7 +281,13 @@ server <- function(input, output) {
     datatable(df, rownames = FALSE)
   })
   
-
+  # Grade Calc Server ----
+  output$homeworkAVG <- renderValueBox({
+    
+  })
+  output$totalMastered <- renderValueBox({
+    
+  })
   
 }
 
