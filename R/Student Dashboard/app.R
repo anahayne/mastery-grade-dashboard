@@ -24,7 +24,6 @@ ui <- dashboardPage(
   , dashboardSidebar( 
     sidebarMenu(
       menuItem(tabName = "home", text = "Home", icon = icon("home"))
-      , menuItem(tabName = "profile", text = "Profile", icon = icon("user"))
       , menuItem(tabName ="viewGrades", text = "View Grades", icon = icon("chalkboard"))
       , menuItem(tabName ="gradeCalculator", text = "Grade Calculator", icon = icon("calculator"))
     )
@@ -40,11 +39,7 @@ ui <- dashboardPage(
         , div(img(src="davidsonCollege.jpg"), style="text-align: center;")
         , HTML("<center> <h3> Software Design, Group 3. <br> Gracie Petty, Abby Santiago, Ben Santiago, Brad Shook, Katie Turner, Ana Hayne & Owen Bezick </h3></center>")
         , uiOutput("authModal")
-      )
-      , tabItem(
-        tabName = "profile"
-        , uiOutput("profileRow")
-        , uiOutput("PprofileRow")
+        , uiOutput("profile")
       )
       # View Grades UI ----
       , tabItem(
@@ -97,13 +92,13 @@ ui <- dashboardPage(
       , tabItem(
         tabName = "gradeCalculator"
         , fluidRow(
-          box(width = 12, title = "Current Grade Information"
+          box(width = 12, title = "Current Grade Information", status = "danger"
               , valueBoxOutput("homeworkAVG")
               , valueBoxOutput("totalMastered")
           )
         )
         , fluidRow(
-          box(width = 12, title = "Grade Calculator"
+          box(width = 12, title = "Grade Calculator", status = "danger"
               , div(img(src="gradeScale.jpg"), style="text-align: center;")
           )
         )
@@ -127,6 +122,7 @@ server <- function(input, output) {
     )
   })
   
+  is <- reactiveValues(auth = F)
   auth_student_id <- reactive(input$student_id)
   
   ls_student_id <- df_students %>%
@@ -137,61 +133,73 @@ server <- function(input, output) {
       name <- df_students %>%
         filter(student_id == input$student_id) %>% select(first_name) %>% pull()
       showNotification(paste("Welcome,", name, "!"), type = "message")
+      is$auth <- T
       removeModal()
     } else {
       showNotification(paste(as.character(input$student_id), "not found. Please try again."), type = "error")
     }
-    
   })
   
-  # Profile Data
-  
-  # Profile Server ----
-  output$profileRow <- renderUI({
+  # Profile ----
+  output$profile <- renderUI({
+    req(is$auth)
     df <- df_students %>%
       filter(student_id == auth_student_id())
-    
-    box(width= 4, title = " Student Information"
-        , column(width = 12
-                 , fluidRow(
-                   HTML("<b> Student ID: </b>")
-                   , df$student_id
-                 )
-                 , fluidRow(
-                   HTML("<b> Name: </b>")
-                   , paste(df$first_name, df$last_name)
-                 )
-                 , fluidRow(
-                   HTML("<b> Photo: </b>")
-                 )
-                 , fluidRow(
-                   img(src= paste0(as.character(df$student_id), ".jpg"))
-                 )
-        )
+    fluidRow(
+      column(width = 6
+             , box(width= 12, title = "Student Information", status = "danger"
+                   , column(width = 6
+                            , fluidRow(
+                              HTML(paste0("<b>", paste(df$first_name, df$last_name), "</b>"))
+                            )
+                            , fluidRow(
+                              img(src= paste0(as.character(df$student_id), ".jpg"))
+                            )
+                   )
+                   , column(width = 6
+                            , br()
+                            , fluidRow(
+                              HTML("<b> Student ID: </b>")
+                              , df$student_id
+                            )
+                            , br()
+                            , fluidRow(
+                              HTML("<b> Email: </b>")
+                              , tolower(paste0(substr(df$first_name, 0, 2), df$last_name, "@davidson.edu"))
+                            )
+                   )
+             )
+      )
+      ,  column(width = 6,
+                box(width= 12, title = "Professor Information", status = "danger"
+                    , column(width = 6
+                             , fluidRow(
+                               HTML("<b> Dr. Professorson </b>"),
+                             )
+                             , fluidRow(
+                               img(src= "mascot.jpg")
+                             )
+                    )
+                    , column(width = 6
+                             , br()
+                             , fluidRow(
+                               HTML("<b> Email: </b>"),
+                               HTML("drprofessorson@davidson.edu")
+                             )
+                             , br()
+                             , fluidRow(
+                               HTML("<b> Office Hours: </b>")
+                               , br()
+                               , HTML("MWF: 9:30- 11")
+                               , br()
+                               , HTML("TTh: 1:40-3:00")
+                             )
+                    )
+                )
+      )
     )
   })
-  
-  #Professor Contact Information
-  output$PprofileRow <- renderUI({
-    box(width= 4, title = " Professor Information"
-        , column(width = 12
-                 , fluidRow(
-                   HTML("<b> Dr. yourProfessor </b>"),
-                 )
-                 , fluidRow(
-                   HTML("<b> Email: </b>"),
-                   HTML("yourProfessor@davidson.edu")
-                 )
-                 , fluidRow(
-                   HTML("<b> Office Hours: </b>")
-                   , HTML("MWF: 9:30- 11")
-                   , HTML("TTh: 1:40-3:00")
-                 )
-        )
-    )
-    
-    
-  })
+
   # View Review Server ---- 
   #List of reviews
   ls_reviews <- reactive({
@@ -288,8 +296,8 @@ server <- function(input, output) {
   })
   
   output$homeworkGradeTable <- renderDT({
-     df <- homeworkData()
-     df <- df %>%
+    df <- homeworkData()
+    df <- df %>%
       select(First = first_name, Last = last_name, `Homework ID` = homework_id, Grade= grade)
     datatable(df, rownames = FALSE)
   })
@@ -304,7 +312,7 @@ server <- function(input, output) {
       e_tooltip() %>%
       e_theme('westeros') %>%
       e_legend(show=F)
-      
+    
     
   })
   
