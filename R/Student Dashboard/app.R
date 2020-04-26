@@ -37,7 +37,7 @@ ui <- dashboardPage(
         tabName = "home"
         , HTML("<center><h1> Mastery Gradebook Dashboard </h1></center>")
         , div(img(src="davidsonCollege.jpg"), style="text-align: center;")
-        , HTML("<center> <h3> Software Design, Group 3. <br> Gracie Petty, Abby Santiago, Ben Santiago, Brad Shook, Katie Turner, Ana Hayne & Owen Bezick </h3></center>")
+        , HTML("<center> <h3> Student View </h3></center>")
         , uiOutput("authModal")
         , uiOutput("profile")
       )
@@ -142,11 +142,13 @@ server <- function(input, output) {
   
   # Profile ----
   output$profile <- renderUI({
-    req(is$auth)
+    req(is$auth) #requires authentication for viewing
     df <- df_students %>%
       filter(student_id == auth_student_id())
+    
     fluidRow(
-      column(width = 6
+      column(width = 2)
+      , column(width = 4
              , box(width= 12, title = "Student Information", status = "danger"
                    , column(width = 6
                             , fluidRow(
@@ -170,7 +172,7 @@ server <- function(input, output) {
                    )
              )
       )
-      ,  column(width = 6,
+      ,  column(width = 4,
                 box(width= 12, title = "Professor Information", status = "danger"
                     , column(width = 6
                              , fluidRow(
@@ -197,6 +199,7 @@ server <- function(input, output) {
                     )
                 )
       )
+      , column(width = 2)
     )
   })
 
