@@ -434,6 +434,7 @@ server <- function(input, output) {
                                                 , icon = icon("save")
                                                 , style = "material-flat"
                                                 , block = T
+                                                , color = "danger"
                                    )
                             )
                             , column(width = 6
@@ -441,6 +442,7 @@ server <- function(input, output) {
                                                   , "Dismiss"
                                                   , icon = icon("close")
                                                   , style = "material-flat"
+                                                  , color = "danger"
                                                   , block = T)
                             )
                         )
@@ -506,6 +508,7 @@ server <- function(input, output) {
                                                 , icon = icon("save")
                                                 , style = "material-flat"
                                                 , block = T
+                                                , color = "danger"
                                    )
                             )
                             , column(width = 6
@@ -513,7 +516,9 @@ server <- function(input, output) {
                                                   , "Dismiss"
                                                   , icon = icon("close")
                                                   , style = "material-flat"
+                                                  , color = "danger"
                                                   , block = T)
+                                     
                             )
                         )
             )
