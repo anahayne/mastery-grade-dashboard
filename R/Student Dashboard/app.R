@@ -52,7 +52,7 @@ ui <- dashboardPage(
       , tabItem(
         tabName = "reviewGrades"
         ,fluidRow(
-          box(width = 12, title = "Filter:", status = "primary" 
+          box(width = 12, title = "Filter:", status = "danger" 
               , column(width = 6
                        ,uiOutput("reviewPicker")
               )
@@ -63,10 +63,10 @@ ui <- dashboardPage(
           )
         )
         , fluidRow(
-          box(width = 6, status = "primary", title = "Review Grades", height = "550"
+          box(width = 6, status = "danger", title = "Review Grades", height = "550"
               , DTOutput("totalReviewGrades")
           )
-          , box(width = 6, height = "550", stauts = "primary", title = "Total Grades", status = "primary"
+          , box(width = 6, height = "550", stauts = "danger", title = "Total Grades", status = "danger"
                 , echarts4rOutput("gradeBar"))
         )
       )
@@ -75,12 +75,12 @@ ui <- dashboardPage(
       , tabItem(
         tabName = "homeworkGrades"
         , fluidRow(
-          box(width = 6, title = "Filter:", status = "primary" 
+          box(width = 6, title = "Filter:", status = "danger" 
               ,uiOutput("hwPicker")
           )
         )
         , fluidRow(
-          box(width = 6, status = "primary", title = "Homework Grades"
+          box(width = 6, status = "danger", title = "Homework Grades"
               , DTOutput("homeworkGradeTable")
           )
         )
