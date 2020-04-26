@@ -363,6 +363,7 @@ server <- function(input, output) {
                                                 , "Save"
                                                 , icon = icon("save")
                                                 , style = "material-flat"
+                                                , color = "danger"
                                                 , block = T
                                    )
                             )
@@ -371,6 +372,7 @@ server <- function(input, output) {
                                                   , "Dismiss"
                                                   , icon = icon("close")
                                                   , style = "material-flat"
+                                                  , color = "danger"
                                                   , block = T)
                             )
                         )
