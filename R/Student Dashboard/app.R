@@ -147,8 +147,8 @@ server <- function(input, output) {
       filter(student_id == auth_student_id())
     
     fluidRow(
-      column(width = 2)
-      , column(width = 4
+      column(width = 1)
+      , column(width = 5
              , box(width= 12, title = "Student Information", status = "danger"
                    , column(width = 6
                             , fluidRow(
@@ -172,7 +172,7 @@ server <- function(input, output) {
                    )
              )
       )
-      ,  column(width = 4,
+      ,  column(width = 5,
                 box(width= 12, title = "Professor Information", status = "danger"
                     , column(width = 6
                              , fluidRow(
@@ -199,7 +199,7 @@ server <- function(input, output) {
                     )
                 )
       )
-      , column(width = 2)
+      , column(width = 1)
     )
   })
 
