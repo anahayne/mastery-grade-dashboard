@@ -283,12 +283,24 @@ server <- function(input, output) {
   
   # Grade Calc Server ----
   output$homeworkAVG <- renderValueBox({
-    
+    auth_student_id <- auth_student_id()
+    df <- getHomeworkGrades()
+    df  <- df %>% 
+      filter(student_id == as.numeric(auth_student_id)) %>%
+      mutate(avg = mean(grade))
+    mean <- df$avg
+    valueBox(paste0(as.character(mean[1]), "%"), "Homework Average")
   })
   output$totalMastered <- renderValueBox({
-    
+    auth_student_id <- auth_student_id()
+    df <- getReviewGrades()
+    df  <- df %>% 
+      filter(student_id == as.numeric(auth_student_id)) %>%
+      filter(grade == "M") %>%
+      distinct(topic_id) 
+    total <- nrow(df)
+    valueBox(total, "Topics Mastered")
   })
-  
 }
 
 
