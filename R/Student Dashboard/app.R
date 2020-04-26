@@ -327,8 +327,8 @@ server <- function(input, output) {
     df  <- df %>% 
       filter(student_id == as.numeric(auth_student_id)) %>%
       mutate(avg = mean(grade))
-    mean <- df$avg
-    valueBox(paste0(as.character(mean[1]), "%"), "Homework Average")
+    mean <- round(df$avg)
+    valueBox(paste0(as.character(mean[1]), "%"), "Homework Average", icon = icon("calculator"),)
   })
   output$totalMastered <- renderValueBox({
     auth_student_id <- auth_student_id()
@@ -338,7 +338,7 @@ server <- function(input, output) {
       filter(grade == "M") %>%
       distinct(topic_id) 
     total <- nrow(df)
-    valueBox(total, "Topics Mastered")
+    valueBox(total, "Topics Mastered", icon = icon("check"), color ="green")
   })
 }
 
