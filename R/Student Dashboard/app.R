@@ -25,13 +25,11 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem(tabName = "home", text = "Home", icon = icon("home"))
       , menuItem(tabName = "profile", text = "Profile", icon = icon("user"))
-      , menuItem(tabName ="viewGrades", text = "View Grades", icon = icon("chalkboard")
-                 , menuSubItem(tabName = "reviewGrades", text = "View Review Grades")
-                 , menuSubItem(tabName = "homeworkGrades", text = "View Homework Grades")
-                 , menuSubItem(tabName = "gradeCalculator", text = "Grade Calculator")
-      )
+      , menuItem(tabName ="viewGrades", text = "View Grades", icon = icon("chalkboard"))
+      , menuItem(tabName ="gradeCalculator", text = "Grade Calculator", icon = icon("calculator"))
     )
   )
+  
   # Body ----
   , dashboardBody( # Contains tabItems
     tabItems(
@@ -48,43 +46,52 @@ ui <- dashboardPage(
         , uiOutput("profileRow")
         , uiOutput("PprofileRow")
       )
-      # View Review UI ----
+      # View Grades UI ----
       , tabItem(
-        tabName = "reviewGrades"
-        ,fluidRow(
-          box(width = 12, title = "Filter:", status = "danger" 
-              , column(width = 6
-                       ,uiOutput("reviewPicker")
-              )
-              ,column(width = 6
-                      ,uiOutput("reviewTopicPicker")
-              )
-              
-          )
-        )
-        , fluidRow(
-          box(width = 6, status = "danger", title = "Review Grades", height = "550"
-              , DTOutput("totalReviewGrades")
-          )
-          , box(width = 6, height = "550", stauts = "danger", title = "Total Grades", status = "danger"
-                , echarts4rOutput("gradeBar"))
+        tabName = "viewGrades"
+        , tabBox(title = "View Grades", width = 12
+                 # Review Grades
+                 , tabPanel( title = "Review Grades", width = 12
+                             , fluidRow(
+                               box(width = 12, title = "Filter:", status = "danger" 
+                                   , column(width = 6
+                                            ,uiOutput("reviewPicker")
+                                   )
+                                   ,column(width = 6
+                                           ,uiOutput("reviewTopicPicker")
+                                   )
+                                   
+                               )
+                             )
+                             , fluidRow(
+                               box(width = 6, status = "danger", title = "Review Grades", height = "550"
+                                   , DTOutput("totalReviewGrades")
+                               )
+                               , box(width = 6, height = "550", stauts = "danger", title = "Total Grades", status = "danger"
+                                     , echarts4rOutput("gradeBar")
+                                     
+                               )
+                             )
+                 )
+                 # Homework Grades
+                 , tabPanel("Homework Grades", width = 12
+                            , fluidRow(
+                              box(width = 12, title = "Filter:", status = "danger" 
+                                  ,uiOutput("hwPicker")
+                              )
+                            )
+                            , fluidRow(
+                              box(width = 6, status = "danger", title = "Homework Grades"
+                                  , DTOutput("homeworkGradeTable")
+                              )
+                              , box(width = 6, title = "Homework Grades", status = "danger"
+                                    , echarts4rOutput("homeworkScatter")
+                              )
+                            )
+                 )
         )
       )
       
-      # View Homework UI ----
-      , tabItem(
-        tabName = "homeworkGrades"
-        , fluidRow(
-          box(width = 6, title = "Filter:", status = "danger" 
-              ,uiOutput("hwPicker")
-          )
-        )
-        , fluidRow(
-          box(width = 6, status = "danger", title = "Homework Grades"
-              , DTOutput("homeworkGradeTable")
-          )
-        )
-      )
       
       # Grade Calculator UI ----
       , tabItem(
@@ -271,17 +278,36 @@ server <- function(input, output) {
   })
   
   # Table
-  output$homeworkGradeTable <- renderDT({
+  homeworkData <- reactive({
     req(input$hwPicker)
     auth_student_id <- auth_student_id()
     df <- getHomeworkGrades()
     df  <- df %>% 
       filter(student_id == as.numeric(auth_student_id)) %>%
-      filter(homework_id %in% input$hwPicker) %>%
+      filter(homework_id %in% input$hwPicker)
+  })
+  
+  output$homeworkGradeTable <- renderDT({
+     df <- homeworkData()
+     df <- df %>%
       select(First = first_name, Last = last_name, `Homework ID` = homework_id, Grade= grade)
-    
     datatable(df, rownames = FALSE)
   })
+  
+  output$homeworkScatter <- renderEcharts4r({
+    df <- homeworkData()
+    df <- df %>%
+      mutate(homework_id = as.character(homework_id))
+    df %>%
+      e_chart(homework_id) %>%
+      e_scatter(grade, symbol_size = 15) %>%
+      e_tooltip() %>%
+      e_theme('westeros') %>%
+      e_legend(show=F)
+      
+    
+  })
+  
   
   # Grade Calc Server ----
   output$homeworkAVG <- renderValueBox({
