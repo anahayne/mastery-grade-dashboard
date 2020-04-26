@@ -1,5 +1,5 @@
 # Project: Mastery Grade System
-# Professor Side Dashboard 
+# Student Side Dashboard 
 # app.R
 #
 # 4/16/20 -- First release (MIT License), in class demo
@@ -28,6 +28,7 @@ ui <- dashboardPage(
       , menuItem(tabName ="viewGrades", text = "View Grades", icon = icon("chalkboard")
                  , menuSubItem(tabName = "reviewGrades", text = "View Review Grades")
                  , menuSubItem(tabName = "homeworkGrades", text = "View Homework Grades")
+                 , menuSubItem(tabName = "gradeCalculator", text = "Grade Calculator")
       )
     )
   )
@@ -84,9 +85,26 @@ ui <- dashboardPage(
           )
         )
       )
+      
+      # Grade Calculator UI ----
+      , tabItem(
+        tabName = "gradeCalculator"
+        , fluidRow(
+          box(width = 12, title = "Current Grade Information"
+              , valueBoxOutput("homeworkAVG")
+              , valueBoxOutput("totalMastered")
+          )
+        )
+        , fluidRow(
+          box(width = 12, title = "Grade Calculator"
+              , div(img(src="gradeScale.jpg"), style="text-align: center;")
+          )
+        )
+      )
     )
   )
 )
+
 
 
 # Define server logic 
@@ -146,6 +164,7 @@ server <- function(input, output) {
     )
   })
   
+  #Professor Contact Information
   output$PprofileRow <- renderUI({
     box(width= 4, title = " Professor Information"
         , column(width = 12
@@ -161,7 +180,6 @@ server <- function(input, output) {
                    , HTML("MWF: 9:30- 11")
                    , HTML("TTh: 1:40-3:00")
                  )
-                
         )
     )
     
@@ -251,6 +269,7 @@ server <- function(input, output) {
                 , selected = ls_homeworksHW()
                 , multiple = TRUE)
   })
+  
   # Table
   output$homeworkGradeTable <- renderDT({
     req(input$hwPicker)
@@ -264,8 +283,28 @@ server <- function(input, output) {
     datatable(df, rownames = FALSE)
   })
   
-  
+  # Grade Calc Server ----
+  output$homeworkAVG <- renderValueBox({
+    auth_student_id <- auth_student_id()
+    df <- getHomeworkGrades()
+    df  <- df %>% 
+      filter(student_id == as.numeric(auth_student_id)) %>%
+      mutate(avg = mean(grade))
+    mean <- df$avg
+    valueBox(paste0(as.character(mean[1]), "%"), "Homework Average")
+  })
+  output$totalMastered <- renderValueBox({
+    auth_student_id <- auth_student_id()
+    df <- getReviewGrades()
+    df  <- df %>% 
+      filter(student_id == as.numeric(auth_student_id)) %>%
+      filter(grade == "M") %>%
+      distinct(topic_id) 
+    total <- nrow(df)
+    valueBox(total, "Topics Mastered")
+  })
 }
+
 
 # Run the application 
 shinyApp(ui = ui, server = server)
