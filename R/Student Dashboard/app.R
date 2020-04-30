@@ -5,7 +5,7 @@
 # 4/16/20 -- First release (MIT License), in class demo
 # 5/1/20 -- Final Version presented
 #
-# Purpose:This file contains the professor side server and user interface. This is where the main development of our app takes place.
+# Purpose:This file contains the student side server and user interface. This is where the main development of our app takes place.
 # 
 # Authors: Owen Bezick, Ana Hayne, Katie Turner, Brad Shook, Abby Santiago,
 # Ben Santiago, and Gracie Petty
