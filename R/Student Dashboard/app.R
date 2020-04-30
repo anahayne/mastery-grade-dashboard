@@ -3,6 +3,7 @@
 # app.R
 #
 # 4/16/20 -- First release (MIT License), in class demo
+# 5/1/20 -- Final Version presented
 #
 # Purpose:This file contains the professor side server and user interface. This is where the main development of our app takes place.
 # 
@@ -14,6 +15,7 @@
 source("utils.R", local = T)
 source("libraries.R", local = TRUE)
 source("dataintake.R", local = TRUE)
+
 # UI ----
 ui <- dashboardPage(
   skin = "red",
@@ -42,11 +44,11 @@ ui <- dashboardPage(
         , uiOutput("profile")
       )
       # View Grades UI ----
-      , tabItem(
+     , tabItem(
         tabName = "viewGrades"
-        , tabBox(title = "View Grades", width = 12
+        , tabBox(title = "View Grades", width = 12, side = c("right"),
                  # Review Grades
-                 , tabPanel( title = "Review Grades", width = 12
+                 tabPanel( title = "Review Grades", width = 12
                              , fluidRow(
                                box(width = 12, title = "Filter:", status = "danger" 
                                    , column(width = 6
@@ -111,7 +113,8 @@ ui <- dashboardPage(
 
 # Define server logic 
 server <- function(input, output) {
-  # Authentication ----
+  
+  # Authentication ---- Ensures input student id is valid
   output$authModal <- renderUI({
     showModal(
       modalDialog(title = "Authentication", easyClose = F, footer = actionBttn(inputId = "auth_save", label = "Continue")
@@ -122,12 +125,15 @@ server <- function(input, output) {
     )
   })
   
+  #Pulls input information
   is <- reactiveValues(auth = F)
   auth_student_id <- reactive(input$student_id)
   
+  #List of valid student idss
   ls_student_id <- df_students %>%
     distinct(student_id) %>% pull()
   
+  #Implements the welcome message by verifying user input
   observeEvent(input$auth_save, {
     if (input$student_id %in% ls_student_id){
       name <- df_students %>%
@@ -140,7 +146,9 @@ server <- function(input, output) {
     }
   })
   
-  # Profile ----
+  
+  # Profile ---- Sets up view boxes for professor and student profile information
+  # pulls student name from the database and uses hard coded professor info
   output$profile <- renderUI({
     req(is$auth) #requires authentication for viewing
     df <- df_students %>%
@@ -223,6 +231,7 @@ server <- function(input, output) {
                 , selected = ls_review_topics()
                 , multiple = TRUE)
   })
+  
   # Review Picker
   output$reviewPicker <- renderUI({
     pickerInput("reviewPicker"
@@ -232,7 +241,7 @@ server <- function(input, output) {
                 , multiple = TRUE)
   })
   
-  # data
+  # Pulls review data from the database for the student by id
   reviewData <- reactive({req(input$reviewTopicPicker, input$reviewPicker)
     auth_student_id <- auth_student_id()
     df <- getReviewGrades()
@@ -241,13 +250,15 @@ server <- function(input, output) {
       filter(review_id %in% input$reviewPicker, topic_id %in% input$reviewTopicPicker) %>%
       select( First = first_name, Last = last_name,`Review ID` = review_id, Topic = topic_id, Grade = grade)
   })
-  # DT output
+  
+  # DT output --- outputs the grade information to the UI
   output$totalReviewGrades <- renderDT({
     df <- reviewData()
     datatable(df, rownames = FALSE)
   })
   
-  # Total Grades Chart
+  # Total Grades Chart-- builds bar chart visualization for the reviews, pulling
+  # info from database
   output$gradeBar <- renderEcharts4r({
     req(input$reviewTopicPicker, input$reviewPicker)
     auth_student_id <- auth_student_id()
@@ -268,17 +279,17 @@ server <- function(input, output) {
       e_bar("A", name = "Apprentice") %>%
       e_bar("J", name = "Journeyman")  %>%
       e_bar("M", name = "Master") %>%
-      e_theme("westeros") %>%
+      e_theme("dark") %>%
       e_tooltip() %>%
       e_legend(bottom = 0)
   })
   
-  # View Homeworks Server -----
-  #List from homework
+  # View Homeworks Server --- List from homework pulled from database
   ls_homeworksHW <- reactive(
     getHomeworkGrades() %>%
       distinct(homework_id) %>% pull()
   )
+  
   # Homework Picker
   output$hwPicker <- renderUI({
     pickerInput("hwPicker"
@@ -288,7 +299,7 @@ server <- function(input, output) {
                 , multiple = TRUE)
   })
   
-  # Table
+  # Homework Table --- filters homework by students
   homeworkData <- reactive({
     req(input$hwPicker)
     auth_student_id <- auth_student_id()
@@ -298,6 +309,7 @@ server <- function(input, output) {
       filter(homework_id %in% input$hwPicker)
   })
   
+  # Creates the data table to be displayed to the student
   output$homeworkGradeTable <- renderDT({
     df <- homeworkData()
     df <- df %>%
@@ -305,6 +317,7 @@ server <- function(input, output) {
     datatable(df, rownames = FALSE)
   })
   
+  # Outputs a scatter plot showing homework average by assignment
   output$homeworkScatter <- renderEcharts4r({
     df <- homeworkData()
     df <- df %>%
@@ -313,14 +326,15 @@ server <- function(input, output) {
       e_chart(homework_id) %>%
       e_scatter(grade, symbol_size = 15) %>%
       e_tooltip() %>%
-      e_theme('westeros') %>%
+      e_theme('dark') %>%
       e_legend(show=F)
     
     
   })
   
   
-  # Grade Calc Server ----
+  # Grade Calc Server ---- pulls data from database and calculates homework average 
+  # and total masteries, renders output boxes to be displayed to the student
   output$homeworkAVG <- renderValueBox({
     auth_student_id <- auth_student_id()
     df <- getHomeworkGrades()
