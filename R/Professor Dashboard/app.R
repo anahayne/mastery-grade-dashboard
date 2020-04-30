@@ -3,6 +3,7 @@
 # app.R
 #
 # 4/16/20 -- First release (MIT License), in class demo
+# 5/1/20 -- Final Version presented
 #
 # Purpose:This file contains the professor side server and user interface. This is where the main development of our app takes place.
 # 
@@ -37,14 +38,16 @@ ui <- dashboardPage(
     # Body ----
     , dashboardBody( # Contains tabItems
         tabItems(
-            # Home UI ----
+            # Home UI ---- Welcome page
             tabItem(
                 tabName = "home"
                 , HTML("<center><h1> Mastery Gradebook Dashboard </h1></center>")
                 , div(img(src="davidsonCollege.jpg"), style="text-align: center;")
                 , HTML("<center> <h3> Software Design, Group 3. <br> Gracie Petty, Abby Santiago, Ben Santiago, Brad Shook, Katie Turner, Ana Hayne & Owen Bezick </h3></center>")
             )
-            # View Review UI ----
+            
+            
+            # View Review UI --- Displays class aggregate data and visualizations
             , tabItem(
                 tabName = "reviewGrades"
                 ,fluidRow(
@@ -66,7 +69,8 @@ ui <- dashboardPage(
                 )
             )
             
-            # View Homework UI ----
+            
+            # View Homework UI ---- Displays class aggregate data and visualizations
             , tabItem(
                 tabName = "homeworkGrades"
                 , fluidRow(
@@ -88,7 +92,10 @@ ui <- dashboardPage(
                     )
                 )
             )
-            # Edit Review Grades ----
+            
+            
+            # Edit Review Grades ---- Allows the professor to input reviews and
+            # adjusts the display appropriately
             , tabItem(
                 tabName = "editReviewGrades"
                 , actionBttn(inputId = "addReview", label = "Add Review", style = "fill", color = "danger", block = T)
@@ -100,7 +107,8 @@ ui <- dashboardPage(
                     )
                 )
             )
-            # Edit Homework UI ----
+            # Edit Homework UI ---- Allows the professor to input homework assignments 
+            # and adjusts the display appropriately
             , tabItem(
                 tabName = "editHomeworkGrades"
                 , actionBttn(inputId = "addHW", label = "Add Homework Assignment", style = "fill", color = "danger", block = T)
@@ -118,19 +126,22 @@ ui <- dashboardPage(
 
 # Define server logic 
 server <- function(input, output) {
+    
     # View Review Server ---- 
     # List of students by ID
     ls_studentsR <- reactive({
         df <- getReviewGrades()
         df %>% distinct(firstLast) %>% pull()
     })
-    # List of students by first_name
-    #List of reviews
+    
+  
+    # List of reviews by student id
     ls_reviews <- reactive({
         df <- getReviewGrades()
         df %>% distinct(review_id) %>% pull()
     })
-    # Student Picker
+    
+    # Student Picker-- logic that implements filtering by students
     output$reviewStudentPicker <- renderUI({
         pickerInput("reviewStudentPicker"
                     ,"Student"
@@ -138,7 +149,8 @@ server <- function(input, output) {
                     , selected = ls_studentsR()
                     , multiple = TRUE)
     })
-    # Review Picker
+    
+    # Review Picker-- logic that implements filtering by review assignment
     output$reviewPicker <- renderUI({
         pickerInput("reviewPicker"
                     ,"Review by ID"
@@ -147,7 +159,8 @@ server <- function(input, output) {
                     , multiple = TRUE)
     })
     
-    # DT output
+    # DT output-- builds the table of students and reviews, pulling information
+    # from the data table
     output$totalReviewGrades <- renderDT({
         req(input$reviewStudentPicker, input$reviewPicker)
         df <- getReviewGrades()
@@ -157,7 +170,7 @@ server <- function(input, output) {
         datatable(df, rownames = FALSE)
     })
     
-    # Total Grades Chart
+    # Total Grades Chart-- visualizes review data from the class
     output$gradeBar <- renderEcharts4r({
         req(input$reviewStudentPicker, input$reviewPicker)
         df <- getReviewGrades() %>%
@@ -177,10 +190,11 @@ server <- function(input, output) {
             e_bar("A", name = "Apprentice") %>%
             e_bar("J", name = "Journeyman")  %>%
             e_bar("M", name = "Master") %>%
-            e_theme("westeros") %>%
+            e_theme("dark") %>%
             e_tooltip() %>%
             e_legend(bottom = 0)
     })
+    
     
     # View Homeworks Server -----
     # List of students by firstLast
@@ -188,11 +202,13 @@ server <- function(input, output) {
         df <- getHomeworkGrades()
         df %>% distinct(firstLast) %>% pull()
     })
+    
     #List from homework
     ls_homeworksHW <- reactive({
         df <- getHomeworkGrades()
         df %>% distinct(homework_id) %>% pull()
     })
+    
     # Student Picker
     output$hwStudentPicker <- renderUI({
         pickerInput("hwStudentPicker"
@@ -201,6 +217,7 @@ server <- function(input, output) {
                     , selected = ls_studentsHW()
                     , multiple = TRUE)
     })
+    
     # Homework Picker
     output$hwPicker <- renderUI({
         pickerInput("hwPicker"
@@ -209,7 +226,8 @@ server <- function(input, output) {
                     , selected = ls_homeworksHW()
                     , multiple = TRUE)
     })
-    # Table
+    
+    # Table-- builds table of students and homeworks to return to UI
     output$homeworkGradeTable <- renderDT({
         req(input$hwStudentPicker, input$hwPicker)
         df <- getHomeworkGrades()
@@ -221,8 +239,8 @@ server <- function(input, output) {
         datatable(df, rownames = FALSE)
     })
     
-    # Homework Average Graph
-    # Data
+    # Homework Average-- calculates homework averages for every student, pulling 
+    # from the data base
     hwAvg <- reactive({
         req(input$hwStudentPicker, input$hwPicker)
         df <- getHomeworkGrades()
@@ -232,13 +250,15 @@ server <- function(input, output) {
             group_by(student_id) %>%
             mutate(homeworkAvg = mean(grade)/100)
     })
-    # Graph
+    
+    # Graph -- pulls data from the database and visualizes
+    # homework grades, returned to UI
     output$avgHomeworkGraph <- renderEcharts4r({
         df <- hwAvg()
         df %>%
             e_chart(last_name) %>%
             e_scatter(homeworkAvg, symbol_size = 10) %>%
-            e_theme("westeros") %>%
+            e_theme("dark") %>%
             e_tooltip(formatter = e_tooltip_item_formatter(
                 style = c("percent"),
                 digits = 2
@@ -252,14 +272,17 @@ server <- function(input, output) {
             ) %>%
             e_legend(show = F)
     })
+    
     # Edit Review Server ----
-    # DT output
+    # Review Grades Data -- pulls all review information from the data base
     reviewGradesData <- reactive({
         df <- getReviewGrades()
         df <- df %>%
             select(First = first_name, Last = last_name,`Review Id` = review_id,Topic = topic_id, Grade = grade)
     })
     
+    # Edit Review Grades-- implements database and display changes to let the 
+    # professor update review assignments
     output$totalEditReviewGrades <- renderDT({
         df <- reviewGradesData()
         datatable(df, rownames = FALSE
@@ -267,6 +290,7 @@ server <- function(input, output) {
                   , filter = 'top', caption = "Click a Row to Edit")
     })
     
+    # Creates interactive box to input changes
     observeEvent(input$totalEditReviewGrades_rows_selected,{
         rowNumber <- input$totalEditReviewGrades_rows_selected
         df <- reviewGradesData()
@@ -336,10 +360,8 @@ server <- function(input, output) {
         removeModal()
     })
     
-
-    #
-    #  Add Review Button press ----
-    #
+    
+    #  Add Review Button press --- implements button to make changes
     observeEvent(input$addReview, {
         showModal(
             modalDialog(title = "Add a Review",  easyClose = T
@@ -384,6 +406,7 @@ server <- function(input, output) {
         removeModal()
     })
     
+    # Saves the new assignment
     observeEvent(input$saveReview, {
         con <- db_connect()
         row <- data_frame(Review_id = c(as.numeric(input$addReviewID))
@@ -404,18 +427,22 @@ server <- function(input, output) {
     })
     
     # Edit Homework Server ----
-    # DT output
+    # DT output -- pulls homeworks from the database
     homeworkGradesData <- reactive({
         df <- getHomeworkGrades()
         df <- df %>%
             select(First = first_name, Last = last_name,`Homework Id` = homework_id, Grade = grade)
     })
     
+    #Data Table -- builds homeworks data table
     output$editHomeworkGrades <- renderDT({
         df <- homeworkGradesData()
         datatable(df, rownames = FALSE, selection = list(mode = 'single', target = 'row'), filter = 'top', caption = "Click a Row to Edit")
     })
     
+    
+    # Edit Review Grades-- implements database and display changes to let the 
+    # professor update review assignments
     observeEvent(input$editHomeworkGrades_rows_selected,{
         rowNumber <- input$editHomeworkGrades_rows_selected
         df <- homeworkGradesData()
@@ -483,9 +510,8 @@ server <- function(input, output) {
         removeModal()
     })
     
-    #
-    #  Add HW Button press ----
-    #
+    
+    #  Add HW Button press --- implements interface for professor to add homeworks
     observeEvent(input$addHW, {
         showModal(
             modalDialog(title = "Add a Homework",  easyClose = T
@@ -530,6 +556,8 @@ server <- function(input, output) {
     observeEvent(input$hwAddDismiss,{
         removeModal()
     })
+    
+    # Inputs the changes to the database
     observeEvent(input$saveHW, {
         con <- db_connect()
         row <- data_frame(homework_id = c(as.numeric(input$hwAddID))
