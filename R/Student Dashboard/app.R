@@ -65,6 +65,7 @@ ui <- dashboardPage(
                                    , DTOutput("totalReviewGrades")
                                )
                                , box(width = 6, height = "550", stauts = "danger", title = "Total Grades", status = "danger"
+                                     , textOutput("masteredTopics")
                                      , echarts4rOutput("gradeBar")
                                      
                                )
@@ -251,6 +252,23 @@ server <- function(input, output) {
       select( First = first_name, Last = last_name,`Review ID` = review_id, Topic = topic_id, Grade = grade)
   })
   
+  # Mastered Topics
+  output$masteredTopics <- renderText({
+    df <- reviewData()
+    mastered_topics <- df %>%
+      filter(Grade == "M") %>%
+      select(Topic) %>%
+      pull() %>%
+      unique()
+   
+    output <- "Mastered Topics: "
+    
+    for (topic in mastered_topics){
+      output <- paste(output, as.character(topic))
+    }
+    return(output)
+    
+  })
   # DT output --- outputs the grade information to the UI
   output$totalReviewGrades <- renderDT({
     df <- reviewData()
